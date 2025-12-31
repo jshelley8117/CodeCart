@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,8 +15,12 @@ import (
 	"google.golang.org/api/impersonate"
 )
 
+type ResourceConfig struct {
+	GCloudDB *sql.DB
+}
+
 func main() {
-	if err := godotenv.Load("./../../.env"); err != nil {
+	if err := godotenv.Load("./.env"); err != nil {
 		log.Panic("cannot load env vars")
 	}
 
@@ -40,9 +45,9 @@ func main() {
 
 	log.Printf("impersonation OK; token expires at %s (in ~%s)", tok.Expiry.Format(time.RFC3339), time.Until(tok.Expiry).Round(time.Second))
 
-	_ = oauth2.ReuseTokenSource(tok, ts)
+	reusableTS := oauth2.ReuseTokenSource(tok, ts)
 
-	_, err = resource.ConnectWithConnector()
+	dbHandle, err := resource.NewGCloudDB(reusableTS)
 	if err != nil {
 		fmt.Printf("could not connect to db: %v", err)
 		log.Panic("exiting main")
@@ -51,6 +56,9 @@ func main() {
 	log.Println("connected to db")
 
 	mux := http.NewServeMux()
+	SetupRoutes(mux, ResourceConfig{
+		GCloudDB: dbHandle,
+	})
 	server := http.Server{
 		Addr:    ":8081",
 		Handler: mux,

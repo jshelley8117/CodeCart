@@ -1,23 +1,17 @@
 package resource
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"net"
 	"os"
 
 	"cloud.google.com/go/cloudsqlconn"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/stdlib"
+	"cloud.google.com/go/cloudsqlconn/postgres/pgxv5"
+	"golang.org/x/oauth2"
 )
 
-func NewGCloudDBHandle() (*sql.DB, error) {
-	dbUser, err := getEnv("GCP_IMP_SA")
-	if err != nil {
-		return nil, err
-	}
-	dbPassword, err := getEnv("GCP_DB_PASS")
+func NewGCloudDB(tokenSource oauth2.TokenSource) (*sql.DB, error) {
+	dbUser, err := getEnv("GCP_DB_USER")
 	if err != nil {
 		return nil, err
 	}
@@ -30,25 +24,27 @@ func NewGCloudDBHandle() (*sql.DB, error) {
 		return nil, err
 	}
 
-	dsn := fmt.Sprintf("user=%s password=%s database=%s", dbUser, dbPassword, dbName)
-	config, err := pgx.ParseConfig(dsn)
+	_, err = pgxv5.RegisterDriver("cloudsqlpostgres",
+		cloudsqlconn.WithIAMAuthN(),
+		cloudsqlconn.WithIAMAuthNTokenSources(tokenSource, tokenSource),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse database config: %w", err)
+		return nil, fmt.Errorf("failed to register driver: %w", err)
 	}
 
-	dialer, err := createDialer()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Cloud SQL dialer: %w", err)
-	}
+	dsn := fmt.Sprintf("user=%s dbname=%s host=%s sslmode=disable",
+		dbUser,
+		dbName,
+		instanceName,
+	)
 
-	config.DialFunc = func(ctx context.Context, network, instance string) (net.Conn, error) {
-		return dialer.Dial(ctx, instanceName)
-	}
-
-	dbURI := stdlib.RegisterConnConfig(config)
-	db, err := sql.Open("pgx", dbURI)
+	db, err := sql.Open("cloudsqlpostgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	return db, nil
@@ -60,14 +56,4 @@ func getEnv(key string) (string, error) {
 		return "", fmt.Errorf("required environment variable %s is not set", key)
 	}
 	return value, nil
-}
-
-func createDialer() (*cloudsqlconn.Dialer, error) {
-	opts := []cloudsqlconn.Option{cloudsqlconn.WithLazyRefresh()}
-
-	if os.Getenv("PRIVATE_IP") != "" {
-		opts = append(opts, cloudsqlconn.WithDefaultDialOptions(cloudsqlconn.WithPrivateIP()))
-	}
-
-	return cloudsqlconn.NewDialer(context.Background(), opts...)
 }
