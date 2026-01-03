@@ -23,7 +23,6 @@ func NewAddressService(addressPersistence persistence.AddressPersistence) Addres
 func (as AddressService) CreateAddress(ctx context.Context, request model.CreateAddressRequest) error {
 	log.Println("Entered CreateAddress")
 	addressDomainModel := model.Address{
-		Id:            "1234",
 		StreetAddress: strings.ToLower(request.StreetAddress),
 		City:          strings.ToLower(request.City),
 		State:         strings.ToLower(request.State),
