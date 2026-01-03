@@ -15,6 +15,6 @@ type Customer struct {
 type CreateCustomerRequest struct {
 	FirstName   string `json:"first_name" validate:"required"`
 	LastName    string `json:"last_name" validate:"required"`
-	PhoneNumber string `json:"phone_number"` // TODO: should validate that phone number conforms to a specific regex pattern
+	PhoneNumber string `json:"phone_number" validate:"e164"` // TODO: should validate that phone number conforms to a specific regex pattern
 	Email       string `json:"email" validate:"required,email"`
 }

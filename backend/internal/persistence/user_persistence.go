@@ -3,23 +3,27 @@ package persistence
 import (
 	"context"
 	"database/sql"
-	"log"
 
 	"github.com/jshelley8117/CodeCart/internal/model"
+	"github.com/jshelley8117/CodeCart/internal/utils"
+	"go.uber.org/zap"
 )
 
 type UserPersistence struct {
 	DbHandle *sql.DB
+	Logger   *zap.Logger
 }
 
-func NewUserPersistence(dbHandle *sql.DB) UserPersistence {
+func NewUserPersistence(dbHandle *sql.DB, logger *zap.Logger) UserPersistence {
 	return UserPersistence{
 		DbHandle: dbHandle,
+		Logger:   logger,
 	}
 }
 
 func (up UserPersistence) PersistCreateUser(ctx context.Context, userDomain model.User) error {
-	log.Println("Entered PersistCreateUser")
+	zLog := utils.FromContext(ctx, up.Logger).Named("user_persistence")
+	zLog.Debug("Entered PersistCreateUser")
 	query := `
 		INSERT INTO users (email, created_at, updated_at, is_active, customer_id, gc_auth_id)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -35,7 +39,7 @@ func (up UserPersistence) PersistCreateUser(ctx context.Context, userDomain mode
 		userDomain.GCAuthId,
 	)
 	if err != nil {
-		// log here
+		zLog.Error("ExecContext failed: %w", zap.Error(err))
 		return err
 	}
 

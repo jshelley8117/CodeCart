@@ -10,16 +10,16 @@ import (
 
 func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	// ---------- USERS DOMAIN ----------
-	userPersistence := persistence.NewUserPersistence(resourceConfig.GCloudDB)
-	userService := service.NewUserService(userPersistence)
-	userHandler := handler.NewUserHandler(userService)
+	userPersistence := persistence.NewUserPersistence(resourceConfig.GCloudDB, resourceConfig.Logger)
+	userService := service.NewUserService(userPersistence, resourceConfig.Logger)
+	userHandler := handler.NewUserHandler(userService, resourceConfig.Logger)
 
 	mux.HandleFunc("POST /api/v1/users", userHandler.HandleCreateUser)
 
 	// ---------- CUSTOMERS DOMAIN ----------
-	customerPersistence := persistence.NewCustomerPersistence(resourceConfig.GCloudDB)
-	customerService := service.NewCustomerService(customerPersistence)
-	customerHandler := handler.NewCustomerHandler(customerService)
+	customerPersistence := persistence.NewCustomerPersistence(resourceConfig.GCloudDB, resourceConfig.Logger)
+	customerService := service.NewCustomerService(customerPersistence, resourceConfig.Logger)
+	customerHandler := handler.NewCustomerHandler(customerService, resourceConfig.Logger)
 
 	mux.HandleFunc("POST /api/v1/customers", customerHandler.HandleCreateCustomer)
 }
