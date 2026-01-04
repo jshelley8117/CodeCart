@@ -29,7 +29,7 @@ func (as AddressService) CreateAddress(ctx context.Context, request model.Create
 		ZipCode:       strings.ToLower(request.ZipCode),
 		Country:       strings.ToLower(request.Country),
 		UserId:        request.UserId,
-		IsDefault:     true,
+		IsDefault:     false,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
