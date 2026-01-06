@@ -45,7 +45,7 @@ func (uh UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		log.Println(err.Error())
+		zLog.Warn("json deserialization failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_UNMARSH_FAIL, http.StatusBadRequest)
 		return
 	}
