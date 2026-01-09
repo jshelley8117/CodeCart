@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jshelley8117/CodeCart/internal/common"
 	"github.com/jshelley8117/CodeCart/internal/model"
 	"github.com/jshelley8117/CodeCart/internal/persistence"
 	"github.com/jshelley8117/CodeCart/internal/utils"
@@ -38,7 +39,7 @@ func (cs CustomerService) CreateCustomer(ctx context.Context, request model.Crea
 		UpdatedAt:   time.Now(),
 	}); err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
-		return err
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 	}
 
 	return nil
@@ -51,7 +52,7 @@ func (cs CustomerService) GetAllCustomers(ctx context.Context) ([]model.Customer
 	customerRows, err := cs.CustomerPersistence.FetchAllCustomersById(ctx)
 	if err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
 	}
 	defer customerRows.Close()
 
@@ -76,7 +77,7 @@ func (cs CustomerService) GetAllCustomers(ctx context.Context) ([]model.Customer
 
 	if err := customerRows.Err(); err != nil {
 		zLog.Error("error occured while iterating through sql rows", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
 	}
 
 	return customers, nil
@@ -88,7 +89,7 @@ func (cs CustomerService) DeleteCustomerById(ctx context.Context, id int) error 
 
 	if err := cs.CustomerPersistence.PersistDeleteCustomerById(ctx, id); err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
-		return err
+		return fmt.Errorf(common.ERR_CLIENT_DB_DELETE_FAIL)
 	}
 	return nil
 }
@@ -114,12 +115,12 @@ func (cs CustomerService) UpdateCustomerById(ctx context.Context, request model.
 
 	if len(updates) == 0 {
 		zLog.Error("No updates found", zap.String("customer_id", strconv.Itoa(id)))
-		return fmt.Errorf("No updates found")
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 	}
 
 	if err := cs.CustomerPersistence.PersistUpdateCustomerById(ctx, id, updates); err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
-		return err
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 	}
 
 	return nil
