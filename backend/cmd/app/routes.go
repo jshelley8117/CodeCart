@@ -22,6 +22,9 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	customerHandler := handler.NewCustomerHandler(customerService, resourceConfig.Logger)
 
 	mux.HandleFunc("POST /api/v1/customers", customerHandler.HandleCreateCustomer)
+	mux.HandleFunc("GET /api/v1/customers", customerHandler.HandleGetAllCustomers)
+	mux.HandleFunc("DELETE /api/v1/customers/{id}", customerHandler.HandleDeleteCustomerById)
+	mux.HandleFunc("PATCH /api/v1/customers/{id}", customerHandler.HandleUpdateCustomerById)
 
 	// ---------- ADDRESS DOMAIN ----------
 	addressPersistence := persistence.NewAddressPersistence(resourceConfig.GCloudDB)
