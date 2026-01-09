@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -88,6 +90,38 @@ func (cs CustomerService) DeleteCustomerById(ctx context.Context, id int) error 
 		zLog.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
+	return nil
+}
+
+func (cs CustomerService) UpdateCustomerById(ctx context.Context, request model.UpdateCustomerRequest, id int) error {
+	zLog := cs.getZLog(ctx)
+	zLog.Debug("entered UpdateCustomerById")
+
+	updates := make(map[string]any)
+
+	if request.FirstName != "" {
+		updates["first_name"] = strings.ToLower(request.FirstName)
+	}
+	if request.LastName != "" {
+		updates["last_name"] = strings.ToLower(request.LastName)
+	}
+	if request.PhoneNumber != nil && *request.PhoneNumber != "" {
+		updates["phone_number"] = strings.ToLower(*request.PhoneNumber)
+	}
+	if request.Email != nil && *request.Email != "" {
+		updates["email"] = strings.ToLower(*request.Email)
+	}
+
+	if len(updates) == 0 {
+		zLog.Error("No updates found", zap.String("customer_id", strconv.Itoa(id)))
+		return fmt.Errorf("No updates found")
+	}
+
+	if err := cs.CustomerPersistence.PersistUpdateCustomerById(ctx, id, updates); err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return err
+	}
+
 	return nil
 }
 
