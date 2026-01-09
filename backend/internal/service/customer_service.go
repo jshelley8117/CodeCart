@@ -70,7 +70,7 @@ func (cs CustomerService) GetAllCustomers(ctx context.Context) ([]model.Customer
 			&cust.UpdatedAt,
 		); err != nil {
 			zLog.Error("scan operation failed", zap.Error(err))
-			return nil, err
+			return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
 		}
 		customers = append(customers, cust)
 	}
