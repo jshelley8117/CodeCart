@@ -49,7 +49,7 @@ func (cs CustomerService) GetAllCustomers(ctx context.Context) ([]model.Customer
 	zLog := cs.getZLog(ctx)
 	zLog.Debug("entered GetAllCustomers")
 
-	customerRows, err := cs.CustomerPersistence.FetchAllCustomersById(ctx)
+	customerRows, err := cs.CustomerPersistence.FetchAllCustomers(ctx)
 	if err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
 		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)

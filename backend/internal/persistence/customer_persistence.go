@@ -49,7 +49,7 @@ func (cp CustomerPersistence) PersistCreateCustomer(ctx context.Context, custome
 	return nil
 }
 
-func (cp CustomerPersistence) FetchAllCustomersById(ctx context.Context) (*sql.Rows, error) {
+func (cp CustomerPersistence) FetchAllCustomers(ctx context.Context) (*sql.Rows, error) {
 	zLog := cp.getZLog(ctx)
 	zLog.Debug("entered FetchAllCustomersById")
 	query := `
@@ -59,7 +59,7 @@ func (cp CustomerPersistence) FetchAllCustomersById(ctx context.Context) (*sql.R
 
 	rows, err := cp.DbHandle.QueryContext(ctx, query)
 	if err != nil {
-		zLog.Error("QueryContext failed for FetchAllCustomersById", zap.Error(err))
+		zLog.Error("QueryContext failed for FetchAllCustomers", zap.Error(err))
 		return nil, err
 	}
 	return rows, nil

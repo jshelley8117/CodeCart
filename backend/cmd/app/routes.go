@@ -32,5 +32,5 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	addressHandler := handler.NewAddressHandler(addressService)
 
 	mux.HandleFunc("POST /api/v1/addresses", addressHandler.HandleCreateAddress)
-
+	mux.HandleFunc("GET /api/v1/addresses", addressHandler.HandleGetAllAddresses)
 }
