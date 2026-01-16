@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/jshelley8117/CodeCart/internal/common"
 	"github.com/jshelley8117/CodeCart/internal/model"
 	"github.com/jshelley8117/CodeCart/internal/persistence"
 	"github.com/jshelley8117/CodeCart/internal/utils"
@@ -19,7 +22,7 @@ type CustomerService struct {
 func NewCustomerService(customerPersistence persistence.CustomerPersistence, logger *zap.Logger) CustomerService {
 	return CustomerService{
 		CustomerPersistence: customerPersistence,
-		Logger:              logger,
+		Logger:              logger.Named("customer_service"),
 	}
 }
 
@@ -35,9 +38,94 @@ func (cs CustomerService) CreateCustomer(ctx context.Context, request model.Crea
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}); err != nil {
-		zLog.Error("persistence invocation failed: %w", zap.Error(err))
-		return err
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 	}
 
 	return nil
+}
+
+func (cs CustomerService) GetAllCustomers(ctx context.Context) ([]model.Customer, error) {
+	zLog := cs.getZLog(ctx)
+	zLog.Debug("entered GetAllCustomers")
+
+	customerRows, err := cs.CustomerPersistence.FetchAllCustomers(ctx)
+	if err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+	}
+	defer customerRows.Close()
+
+	customers := make([]model.Customer, 0)
+
+	for customerRows.Next() {
+		var cust model.Customer
+		if err := customerRows.Scan(
+			&cust.Id,
+			&cust.FirstName,
+			&cust.LastName,
+			&cust.PhoneNumber,
+			&cust.Email,
+			&cust.CreatedAt,
+			&cust.UpdatedAt,
+		); err != nil {
+			zLog.Error("scan operation failed", zap.Error(err))
+			return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+		}
+		customers = append(customers, cust)
+	}
+
+	if err := customerRows.Err(); err != nil {
+		zLog.Error("error occured while iterating through sql rows", zap.Error(err))
+		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+	}
+
+	return customers, nil
+}
+
+func (cs CustomerService) DeleteCustomerById(ctx context.Context, id int) error {
+	zLog := cs.getZLog(ctx)
+	zLog.Debug("entered DeleteCustomerById")
+
+	if err := cs.CustomerPersistence.PersistDeleteCustomerById(ctx, id); err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return fmt.Errorf(common.ERR_CLIENT_DB_DELETE_FAIL)
+	}
+	return nil
+}
+
+func (cs CustomerService) UpdateCustomerById(ctx context.Context, request model.UpdateCustomerRequest, id int) error {
+	zLog := cs.getZLog(ctx)
+	zLog.Debug("entered UpdateCustomerById")
+
+	updates := make(map[string]any)
+
+	if request.FirstName != "" {
+		updates["first_name"] = strings.ToLower(request.FirstName)
+	}
+	if request.LastName != "" {
+		updates["last_name"] = strings.ToLower(request.LastName)
+	}
+	if request.PhoneNumber != nil && *request.PhoneNumber != "" {
+		updates["phone_number"] = strings.ToLower(*request.PhoneNumber)
+	}
+	if request.Email != nil && *request.Email != "" {
+		updates["email"] = strings.ToLower(*request.Email)
+	}
+
+	if len(updates) == 0 {
+		zLog.Error("No updates found", zap.String("customer_id", strconv.Itoa(id)))
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+	}
+
+	if err := cs.CustomerPersistence.PersistUpdateCustomerById(ctx, id, updates); err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+	}
+
+	return nil
+}
+
+func (cs CustomerService) getZLog(ctx context.Context) *zap.Logger {
+	return utils.FromContext(ctx, cs.Logger)
 }
