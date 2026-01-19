@@ -22,15 +22,14 @@ func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain m
 	log.Println("Entereed PersistCreateOrder")
 
 	query := `
-		INSERT INTO orders (id, customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, "orderType")
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO orders (customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, "orderType")
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
 	log.Printf("DEBUG: Attempting to save Order with AddressId: %v", orderDomain.AddressId)
 	_, err := op.DbHandle.ExecContext(
 		ctx,
 		query,
-		orderDomain.Id,
 		orderDomain.CustomerId,
 		orderDomain.Status,
 		orderDomain.TotalPrice,

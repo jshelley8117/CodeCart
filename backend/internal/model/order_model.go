@@ -38,4 +38,5 @@ type CreateOrderRequest struct {
 	TotalPrice      float64         `json:"total_price" validate:"required"`
 	DeliveryAddress json.RawMessage `json:"delivery_address"`
 	OrderType       OrderType       `json:"orderType" validate:"required"`
+	AddressId       int             `json:"address_id"`
 }

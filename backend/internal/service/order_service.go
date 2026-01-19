@@ -26,14 +26,29 @@ func NewOrderService(orderPersistence persistence.OrderPersistence) OrderService
 // Returns an error if the persistence layer fails to create the order
 func (os OrderService) CreateOrder(ctx context.Context, request model.CreateOrderRequest) error {
 	log.Println("Entered CreateOrderService")
-	orderDomainModel := model.Order{
-		CustomerId:      request.CustomerId,
-		Status:          request.Status,
-		TotalPrice:      request.TotalPrice,
-		DeliveryAddress: request.DeliveryAddress,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		OrderType:       request.OrderType,
+	var orderDomainModel model.Order
+	if request.AddressId == 0 {
+		orderDomainModel = model.Order{
+			CustomerId:      request.CustomerId,
+			Status:          request.Status,
+			TotalPrice:      request.TotalPrice,
+			DeliveryAddress: request.DeliveryAddress,
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
+			OrderType:       request.OrderType,
+			AddressId:       -1,
+		}
+	} else {
+		orderDomainModel = model.Order{
+			CustomerId:      request.CustomerId,
+			Status:          request.Status,
+			TotalPrice:      request.TotalPrice,
+			DeliveryAddress: request.DeliveryAddress,
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
+			OrderType:       request.OrderType,
+			AddressId:       request.AddressId,
+		}
 	}
 
 	log.Println("Trying to save Order with AddressId: ", orderDomainModel.CustomerId)
