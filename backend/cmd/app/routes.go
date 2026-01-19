@@ -30,4 +30,11 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 
 	mux.HandleFunc("POST /api/v1/addresses", addressHandler.HandleCreateAddress)
 
+	// ---------- ORDERS DOMAIN ----------
+	orderPersistence := persistence.NewOrderPersistence(resourceConfig.GCloudDB)
+	orderService := service.NewOrderService(orderPersistence)
+	orderHandler := handler.NewOrderHandler(orderService)
+
+	mux.HandleFunc("POST /api/v1/orders", orderHandler.HandleCreateOrder)
+
 }
