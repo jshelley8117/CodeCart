@@ -61,8 +61,7 @@ func (cfc *CloudFunctionClient) InvokeFunction(ctx context.Context, url, method 
 		}
 	}
 
-	// Get ID token using service account impersonation
-	idToken, err := cfc.getIDToken(ctx, url)
+	idToken, err := cfc.getIdToken(ctx, url)
 	if err != nil {
 		cfc.Logger.Error("failed to get ID token", zap.Error(err))
 		return fmt.Errorf("failed to get ID token: %w", err)
@@ -100,9 +99,7 @@ func (cfc *CloudFunctionClient) InvokeFunction(ctx context.Context, url, method 
 	return nil
 }
 
-// getIDToken generates an ID token for the target audience using service account impersonation
-func (cfc *CloudFunctionClient) getIDToken(ctx context.Context, audience string) (string, error) {
-	// Create impersonated ID token source
+func (cfc *CloudFunctionClient) getIdToken(ctx context.Context, audience string) (string, error) {
 	ts, err := impersonate.IDTokenSource(ctx, impersonate.IDTokenConfig{
 		Audience:        audience,
 		TargetPrincipal: cfc.ServiceAccountEmail,
