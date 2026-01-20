@@ -8,16 +8,16 @@ import (
 type OrderStatus string
 
 const (
-	OrderStatusConfirmed OrderStatus = "confirmed"
-	OrderStatusPending   OrderStatus = "pending"
-	OrderStatusCanceled  OrderStatus = "canceled"
+	OrderStatusConfirmed OrderStatus = "CONFIRMED"
+	OrderStatusPending   OrderStatus = "PENDING"
+	OrderStatusCanceled  OrderStatus = "CANCELED"
 )
 
 type OrderType string
 
 const (
-	OrderTypePickup   OrderStatus = "pickup"
-	OrderTypeDelivery OrderStatus = "delivery"
+	OrderTypePickup   OrderStatus = "PICKUP"
+	OrderTypeDelivery OrderStatus = "DELIVERY"
 )
 
 type Order struct {
@@ -34,7 +34,6 @@ type Order struct {
 
 type CreateOrderRequest struct {
 	CustomerId      int             `json:"customer_id" validate:"required"`
-	Status          OrderStatus     `json:"status" validate:"required"`
 	TotalPrice      float64         `json:"total_price" validate:"required"`
 	DeliveryAddress json.RawMessage `json:"delivery_address"`
 	OrderType       OrderType       `json:"orderType" validate:"required"`

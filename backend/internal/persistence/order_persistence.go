@@ -3,23 +3,27 @@ package persistence
 import (
 	"context"
 	"database/sql"
-	"log"
 
 	"github.com/jshelley8117/CodeCart/internal/model"
+	"github.com/jshelley8117/CodeCart/internal/utils"
+	"go.uber.org/zap"
 )
 
 type OrderPersistence struct {
 	DbHandle *sql.DB
+	Logger   *zap.Logger
 }
 
-func NewOrderPersistence(dbHandle *sql.DB) OrderPersistence {
+func NewOrderPersistence(dbHandle *sql.DB, logger *zap.Logger) OrderPersistence {
 	return OrderPersistence{
 		DbHandle: dbHandle,
+		Logger:   logger,
 	}
 }
 
 func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain model.Order) error {
-	log.Println("Entereed PersistCreateOrder")
+	zLog := utils.FromContext(ctx, op.Logger).Named("order_persistence")
+	zLog.Debug("Entered PersistCreateOrder")
 
 	query := `
 		INSERT INTO orders (customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, "orderType")
@@ -39,8 +43,9 @@ func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain m
 		orderDomain.OrderType,
 	)
 	if err != nil {
-		log.Printf("Error in PersistCreateOrder, %s", err)
+		zLog.Error("ExecContext failed: %w", zap.Error(err))
 		return err
 	}
+
 	return nil
 }
