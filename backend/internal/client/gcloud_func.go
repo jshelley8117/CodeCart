@@ -32,7 +32,7 @@ func NewCloudFunctionClient(tokenSource oauth2.TokenSource, serviceAccountEmail 
 	}
 }
 
-func (cfc *CloudFunctionClient) InvokeFunction(ctx context.Context, url, method string, requestBody, response any) error {
+func (cfc *CloudFunctionClient) invokeFunction(ctx context.Context, url, method string, requestBody, response any) error {
 	cfc.Logger.Debug("invoking cloud function",
 		zap.String("url", url),
 		zap.String("method", method))
@@ -119,7 +119,7 @@ func (cfc *CloudFunctionClient) getIdToken(ctx context.Context, audience string)
 
 func (cfc *CloudFunctionClient) InvokeHelloWorld(ctx context.Context, url string) (*HelloWorldResponse, error) {
 	var response HelloWorldResponse
-	if err := cfc.InvokeFunction(ctx, url, http.MethodGet, nil, &response); err != nil {
+	if err := cfc.invokeFunction(ctx, url, http.MethodGet, nil, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
