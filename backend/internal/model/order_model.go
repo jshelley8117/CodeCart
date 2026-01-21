@@ -39,3 +39,11 @@ type CreateOrderRequest struct {
 	OrderType       OrderType       `json:"orderType" validate:"required"`
 	AddressId       int             `json:"address_id"`
 }
+
+type UpdateOrderRequest struct {
+	Status          OrderStatus     `json:"status"`
+	TotalPrice      float64         `json:"total_price"`
+	DeliveryAddress json.RawMessage `json:"delivery_address"`
+	AddressId       int             `json:"address_id"`
+	OrderType       OrderType       `json:"order_type"`
+}
