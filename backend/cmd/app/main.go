@@ -20,8 +20,9 @@ import (
 const EXIT_STATUS = 1
 
 type ResourceConfig struct {
-	GCloudDB *sql.DB
-	Logger   *zap.Logger
+	GCloudDB    *sql.DB
+	Logger      *zap.Logger
+	TokenSource oauth2.TokenSource
 }
 
 func main() {
@@ -70,8 +71,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	SetupRoutes(mux, ResourceConfig{
-		GCloudDB: dbHandle,
-		Logger:   logger,
+		GCloudDB:    dbHandle,
+		Logger:      logger,
+		TokenSource: reusableTS,
 	})
 
 	handler := middleware.Recoverer(logger)(middleware.RequestLogger(logger)(mux))
