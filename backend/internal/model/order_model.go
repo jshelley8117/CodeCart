@@ -29,7 +29,7 @@ type Order struct {
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
 	AddressId       int             `json:"address_id"`
-	OrderType       OrderType       `json:"orderType"`
+	OrderType       OrderType       `json:"order_type"`
 }
 
 type CreateOrderRequest struct {
