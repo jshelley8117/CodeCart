@@ -83,7 +83,7 @@ func (cfc *CloudFunctionClient) invokeFunction(ctx context.Context, url, method 
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		cfc.Logger.Error("cloud function returned error status",
+		cfc.Logger.Error("cloud function returned a non-success status",
 			zap.Int("status", resp.StatusCode),
 			zap.String("body", string(body)))
 		return fmt.Errorf("cloud function returned status %d: %s", resp.StatusCode, string(body))
