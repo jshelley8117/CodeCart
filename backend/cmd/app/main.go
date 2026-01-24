@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/jshelley8117/CodeCart/internal/middleware"
 	"github.com/jshelley8117/CodeCart/internal/resource"
 	"github.com/jshelley8117/CodeCart/internal/utils"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/impersonate"
@@ -26,48 +28,72 @@ type ResourceConfig struct {
 }
 
 func main() {
+	dbMode := flag.String("db", "", "Database mode: 'gcp' or 'local'")
+	flag.Parse()
+
+	if *dbMode == "" {
+		log.Fatal("Error: -db flag is required. Use '-db=gcp' or 'db=local' when spinning up the server")
+	}
+
 	if err := godotenv.Load("./.env"); err != nil {
-		log.Panic("cannot load env vars")
+		log.Fatal("Error: cannot load env vars")
 	}
 
 	logger, err := utils.NewLogger(utils.Config{Env: os.Getenv("ENV")})
 	if err != nil {
-		log.Panic("cannot instantiate logger")
+		log.Fatal("Error: cannot instantiate logger")
 	}
 
-	targetSA := os.Getenv("GCP_IMP_SA")
-	if targetSA == "" {
-		logger.Error("GCP_IMP_SA is not set")
+	var dbHandle *sql.DB
+	var reusableTS oauth2.TokenSource
+
+	switch *dbMode {
+	case "local":
+		logger.Debug("Attempting to connect to local PostgreSQL database")
+		dbHandle, err = resource.NewPostgreSqlDb()
+		if err != nil {
+			logger.Error("Failed to establish connection to local PostgreSQL DB", zap.Error(err))
+			os.Exit(EXIT_STATUS)
+		}
+	case "gcp":
+		logger.Debug("Attempting to connect to Google Cloud Platform SQL DB")
+		targetSA := os.Getenv("GCP_IMP_SA")
+		if targetSA == "" {
+			logger.Error("GCP_IMP_SA is not set")
+			os.Exit(EXIT_STATUS)
+		}
+
+		ctx := context.Background()
+		ts, err := impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
+			TargetPrincipal: targetSA,
+			Scopes:          []string{"https://www.googleapis.com/auth/cloud-platform"},
+		})
+		if err != nil {
+			logger.Error("failed to create impersonated token source: %v", zap.Error(err))
+			os.Exit(EXIT_STATUS)
+		}
+
+		tok, err := ts.Token()
+		if err != nil {
+			logger.Error("failed to mint impersonated token: %v", zap.Error(err))
+			os.Exit(EXIT_STATUS)
+		}
+
+		logger.Debug("impersonation OK; token expires at %s (in ~%s)", zap.String("expiry", tok.Expiry.Format(time.RFC3339)), zap.String("duration", time.Until(tok.Expiry).Round(time.Second).String()))
+
+		reusableTS := oauth2.ReuseTokenSource(tok, ts)
+
+		dbHandle, err = resource.NewGCloudDB(reusableTS)
+		if err != nil {
+			logger.Error("could not connect to db: %v", zap.Error(err))
+			os.Exit(EXIT_STATUS)
+		}
+	default:
+		logger.Error("invalid db mode provided", zap.String("mode", *dbMode))
 		os.Exit(EXIT_STATUS)
 	}
 
-	ctx := context.Background()
-	ts, err := impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
-		TargetPrincipal: targetSA,
-		Scopes:          []string{"https://www.googleapis.com/auth/cloud-platform"},
-	})
-	if err != nil {
-		logger.Error("failed to create impersonated token source: %v", zap.Error(err))
-		os.Exit(EXIT_STATUS)
-	}
-
-	tok, err := ts.Token()
-	if err != nil {
-		logger.Error("failed to mint impersonated token: %v", zap.Error(err))
-		os.Exit(EXIT_STATUS)
-	}
-
-	logger.Debug("impersonation OK; token expires at %s (in ~%s)", zap.String("expiry", tok.Expiry.Format(time.RFC3339)), zap.String("duration", time.Until(tok.Expiry).Round(time.Second).String()))
-
-	reusableTS := oauth2.ReuseTokenSource(tok, ts)
-
-	dbHandle, err := resource.NewGCloudDB(reusableTS)
-	if err != nil {
-		logger.Error("could not connect to db: %v", zap.Error(err))
-		os.Exit(EXIT_STATUS)
-	}
-
-	logger.Debug("connected to db")
+	logger.Debug("db connection established")
 
 	mux := http.NewServeMux()
 	SetupRoutes(mux, ResourceConfig{
