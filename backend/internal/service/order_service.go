@@ -97,9 +97,3 @@ func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 	}
 	return orders, nil
 }
-
-// func (os OrderService) DeleteOrderById(ctx context.Context, id int) error {
-// 	zLog := os.getZLog(ctx)
-// 	zLog.Debug("entered DeleteOrderById")
-
-// }

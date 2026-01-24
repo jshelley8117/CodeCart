@@ -65,15 +65,15 @@ func (oh OrderHandler) HandleGetAllOrders(w http.ResponseWriter, r *http.Request
 
 	orders, err := oh.OrderService.GetAllOrders(r.Context())
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
-		http.Error(w, "Failed to retrieve orders", http.StatusInternalServerError)
+		zLog.Warn("Service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
 	ordersApiResponse, err := json.Marshal(orders)
 	if err != nil {
-		zLog.Error("go marshaling failed", zap.Error(err))
-		http.Error(w, "Failed to serialize response to client", http.StatusInternalServerError)
+		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
@@ -81,31 +81,3 @@ func (oh OrderHandler) HandleGetAllOrders(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 	w.Write(ordersApiResponse)
 }
-
-// func (oh OrderHandler) HandleDeleteOrderById(w http.ResponseWriter, r *http.Request) {
-// 	zLog := utils.FromContext(r.Context(), oh.Logger).Named("order_handler")
-// 	zLog.Debug("entererd HandleDeleteOrderById ")
-
-// 	idPathVal := r.PathValue("id")
-// 	if idPathVal == "" {
-// 		zLog.Error("ID field in endpoint path parameter is missing")
-// 		http.Error(w, "ID is empty", http.StatusBadRequest)
-// 		return
-// 	}
-// 	id, err := strconv.Atoi(idPathVal)
-// 	if err != nil {
-// 		zLog.Error("failed to convert id value from string to integer")
-// 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	if err := oh.OrderService.DeleteOrderById(r.Context(), id); err != nil {
-// 		zLog.Error("service invocation failed", zap.Error(err))
-// 		http.Error(w, fmt.Sprintf("Failed to delete order [ID: %v]", id), http.StatusInternalServerError)
-// 		return
-
-// 	}
-
-// 	w.WriteHeader(http.StatusOK)
-
-// }
