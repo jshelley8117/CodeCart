@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -15,7 +14,6 @@ import (
 
 type AddressHandler struct {
 	AddressService service.AddressService
-	Logger         *zap.Logger
 }
 
 func NewAddressHandler(addressService service.AddressService) AddressHandler {
@@ -25,7 +23,7 @@ func NewAddressHandler(addressService service.AddressService) AddressHandler {
 }
 
 func (ah AddressHandler) HandleCreateAddress(w http.ResponseWriter, r *http.Request) {
-	zLog := ah.getZLog(r.Context())
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	zLog.Debug("Entered HandleCreateAddress")
 
 	var request model.CreateAddressRequest
@@ -55,7 +53,7 @@ func (ah AddressHandler) HandleCreateAddress(w http.ResponseWriter, r *http.Requ
 }
 
 func (ah AddressHandler) HandleGetAllAddresses(w http.ResponseWriter, r *http.Request) {
-	zLog := ah.getZLog(r.Context())
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	zLog.Debug("Entered HandleGetAllAddresses")
 
 	addresses, err := ah.AddressService.GetAllAddresses(r.Context())
@@ -75,8 +73,4 @@ func (ah AddressHandler) HandleGetAllAddresses(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(addressesApiResponse)
-}
-
-func (ah AddressHandler) getZLog(ctx context.Context) *zap.Logger {
-	return utils.FromContext(ctx, ah.Logger)
 }

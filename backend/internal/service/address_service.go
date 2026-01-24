@@ -16,7 +16,6 @@ import (
 
 type AddressService struct {
 	AddressPersistence persistence.AddressPersistence
-	Logger             *zap.Logger
 }
 
 func NewAddressService(addressPersistence persistence.AddressPersistence) AddressService {
@@ -47,7 +46,7 @@ func (as AddressService) CreateAddress(ctx context.Context, request model.Create
 }
 
 func (as AddressService) GetAllAddresses(ctx context.Context) ([]model.Address, error) {
-	zLog := as.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered GetAllAddresses")
 
 	addressRows, err := as.AddressPersistence.FetchAllAddresses(ctx)
@@ -85,8 +84,4 @@ func (as AddressService) GetAllAddresses(ctx context.Context) ([]model.Address, 
 	}
 
 	return addresses, nil
-}
-
-func (as AddressService) getZLog(ctx context.Context) *zap.Logger {
-	return utils.FromContext(ctx, as.Logger)
 }

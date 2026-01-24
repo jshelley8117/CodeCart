@@ -13,18 +13,16 @@ import (
 
 type UserService struct {
 	UserPersistence persistence.UserPersistence
-	Logger          *zap.Logger
 }
 
-func NewUserService(userPersistence persistence.UserPersistence, logger *zap.Logger) UserService {
+func NewUserService(userPersistence persistence.UserPersistence) UserService {
 	return UserService{
 		UserPersistence: userPersistence,
-		Logger:          logger,
 	}
 }
 
 func (us UserService) CreateUser(ctx context.Context, request model.CreateUserRequest) error {
-	zLog := utils.FromContext(ctx, us.Logger).Named("user_service")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered CreateUser")
 	userDomainModel := model.User{
 		Email:      strings.ToLower(request.Email),

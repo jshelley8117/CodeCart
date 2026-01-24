@@ -11,19 +11,17 @@ import (
 type CloudFunctionService struct {
 	CloudFunctionClient *client.CloudFunctionClient
 	HelloWorldURL       string
-	Logger              *zap.Logger
 }
 
-func NewCloudFunctionService(cfClient *client.CloudFunctionClient, helloWorldUrl string, logger *zap.Logger) CloudFunctionService {
+func NewCloudFunctionService(cfClient *client.CloudFunctionClient, helloWorldUrl string) CloudFunctionService {
 	return CloudFunctionService{
 		CloudFunctionClient: cfClient,
 		HelloWorldURL:       helloWorldUrl,
-		Logger:              logger.Named("cloud_function_service"),
 	}
 }
 
 func (cfs CloudFunctionService) GetHelloWorld(ctx context.Context) (*client.HelloWorldResponse, error) {
-	zLog := utils.FromContext(ctx, cfs.Logger)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered GetHelloWorld")
 
 	response, err := cfs.CloudFunctionClient.InvokeHelloWorld(ctx, cfs.HelloWorldURL)

@@ -13,18 +13,16 @@ import (
 
 type CustomerPersistence struct {
 	DbHandle *sql.DB
-	Logger   *zap.Logger
 }
 
-func NewCustomerPersistence(dbHandle *sql.DB, logger *zap.Logger) CustomerPersistence {
+func NewCustomerPersistence(dbHandle *sql.DB) CustomerPersistence {
 	return CustomerPersistence{
 		DbHandle: dbHandle,
-		Logger:   logger.Named("customer_persistence"),
 	}
 }
 
 func (cp CustomerPersistence) PersistCreateCustomer(ctx context.Context, customerDomain model.Customer) error {
-	zLog := cp.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered PersistCreateCustomer")
 	query := `
 		INSERT INTO customers (first_name, last_name, phone_number, email, created_at, updated_at)
@@ -50,7 +48,7 @@ func (cp CustomerPersistence) PersistCreateCustomer(ctx context.Context, custome
 }
 
 func (cp CustomerPersistence) FetchAllCustomers(ctx context.Context) (*sql.Rows, error) {
-	zLog := cp.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered FetchAllCustomersById")
 	query := `
 		SELECT id, first_name, last_name, phone_number, email, created_at, updated_at
@@ -66,7 +64,7 @@ func (cp CustomerPersistence) FetchAllCustomers(ctx context.Context) (*sql.Rows,
 }
 
 func (cp CustomerPersistence) PersistDeleteCustomerById(ctx context.Context, id int) error {
-	zLog := cp.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered PersistDeleteCustomerById")
 	query := `
 		DELETE FROM customers
@@ -81,7 +79,7 @@ func (cp CustomerPersistence) PersistDeleteCustomerById(ctx context.Context, id 
 }
 
 func (cp CustomerPersistence) PersistUpdateCustomerById(ctx context.Context, id int, updates map[string]any) error {
-	zLog := cp.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered PersistUpdateCustomerById")
 
 	allowedFields := map[string]bool{
@@ -127,8 +125,4 @@ func (cp CustomerPersistence) PersistUpdateCustomerById(ctx context.Context, id 
 		return err
 	}
 	return nil
-}
-
-func (cp CustomerPersistence) getZLog(ctx context.Context) *zap.Logger {
-	return utils.FromContext(ctx, cp.Logger)
 }

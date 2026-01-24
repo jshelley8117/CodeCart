@@ -12,7 +12,6 @@ import (
 
 type AddressPersistence struct {
 	DbHandle *sql.DB
-	Logger   *zap.Logger
 }
 
 func NewAddressPersistence(dbHandle *sql.DB) AddressPersistence {
@@ -22,7 +21,7 @@ func NewAddressPersistence(dbHandle *sql.DB) AddressPersistence {
 }
 
 func (ap AddressPersistence) PersistCreateAddress(ctx context.Context, addressDomain model.Address) error {
-	zLog := ap.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered PersistCreateAddress")
 	query := `
 		INSERT INTO addresses (id, user_id, street_address, city, state, zip_code, country, is_default, created_at, updated_at)
@@ -51,7 +50,7 @@ func (ap AddressPersistence) PersistCreateAddress(ctx context.Context, addressDo
 }
 
 func (ap AddressPersistence) FetchAllAddresses(ctx context.Context) (*sql.Rows, error) {
-	zLog := ap.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered FetchAllAddresses")
 
 	query := `
@@ -65,8 +64,4 @@ func (ap AddressPersistence) FetchAllAddresses(ctx context.Context) (*sql.Rows, 
 		return nil, err
 	}
 	return rows, nil
-}
-
-func (ap AddressPersistence) getZLog(ctx context.Context) *zap.Logger {
-	return utils.FromContext(ctx, ap.Logger)
 }

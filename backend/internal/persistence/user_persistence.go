@@ -11,18 +11,16 @@ import (
 
 type UserPersistence struct {
 	DbHandle *sql.DB
-	Logger   *zap.Logger
 }
 
-func NewUserPersistence(dbHandle *sql.DB, logger *zap.Logger) UserPersistence {
+func NewUserPersistence(dbHandle *sql.DB) UserPersistence {
 	return UserPersistence{
 		DbHandle: dbHandle,
-		Logger:   logger,
 	}
 }
 
 func (up UserPersistence) PersistCreateUser(ctx context.Context, userDomain model.User) error {
-	zLog := utils.FromContext(ctx, up.Logger).Named("user_persistence")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered PersistCreateUser")
 	query := `
 		INSERT INTO users (email, created_at, updated_at, is_active, customer_id, gc_auth_id)

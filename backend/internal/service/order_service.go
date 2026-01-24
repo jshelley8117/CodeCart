@@ -12,17 +12,16 @@ import (
 
 type OrderService struct {
 	OrderPersistence persistence.OrderPersistence
-	Logger           *zap.Logger
 }
 
-func NewOrderService(orderPersistence persistence.OrderPersistence, logger *zap.Logger) OrderService {
+func NewOrderService(orderPersistence persistence.OrderPersistence) OrderService {
 	return OrderService{
 		OrderPersistence: orderPersistence,
 	}
 }
 
 func (os OrderService) CreateOrder(ctx context.Context, request model.CreateOrderRequest) error {
-	zLog := utils.FromContext(ctx, os.Logger).Named("order_service")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered OrderService")
 
 	var orderDomainModel model.Order

@@ -22,18 +22,16 @@ type UserService interface {
 
 type UserHandler struct {
 	UserService service.UserService
-	Logger      *zap.Logger
 }
 
-func NewUserHandler(userService service.UserService, logger *zap.Logger) UserHandler {
+func NewUserHandler(userService service.UserService) UserHandler {
 	return UserHandler{
 		UserService: userService,
-		Logger:      logger,
 	}
 }
 
 func (uh UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), uh.Logger).Named("user_handler")
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	var request model.CreateUserRequest
 	zLog.Debug("entered HandleCreateUser")
 

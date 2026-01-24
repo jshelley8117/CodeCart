@@ -16,18 +16,16 @@ import (
 
 type CustomerService struct {
 	CustomerPersistence persistence.CustomerPersistence
-	Logger              *zap.Logger
 }
 
-func NewCustomerService(customerPersistence persistence.CustomerPersistence, logger *zap.Logger) CustomerService {
+func NewCustomerService(customerPersistence persistence.CustomerPersistence) CustomerService {
 	return CustomerService{
 		CustomerPersistence: customerPersistence,
-		Logger:              logger.Named("customer_service"),
 	}
 }
 
 func (cs CustomerService) CreateCustomer(ctx context.Context, request model.CreateCustomerRequest) error {
-	zLog := utils.FromContext(ctx, cs.Logger).Named("customer_service")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered CustomerService")
 
 	if err := cs.CustomerPersistence.PersistCreateCustomer(ctx, model.Customer{
@@ -46,7 +44,7 @@ func (cs CustomerService) CreateCustomer(ctx context.Context, request model.Crea
 }
 
 func (cs CustomerService) GetAllCustomers(ctx context.Context) ([]model.Customer, error) {
-	zLog := cs.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered GetAllCustomers")
 
 	customerRows, err := cs.CustomerPersistence.FetchAllCustomers(ctx)
@@ -84,7 +82,7 @@ func (cs CustomerService) GetAllCustomers(ctx context.Context) ([]model.Customer
 }
 
 func (cs CustomerService) DeleteCustomerById(ctx context.Context, id int) error {
-	zLog := cs.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered DeleteCustomerById")
 
 	if err := cs.CustomerPersistence.PersistDeleteCustomerById(ctx, id); err != nil {
@@ -95,7 +93,7 @@ func (cs CustomerService) DeleteCustomerById(ctx context.Context, id int) error 
 }
 
 func (cs CustomerService) UpdateCustomerById(ctx context.Context, request model.UpdateCustomerRequest, id int) error {
-	zLog := cs.getZLog(ctx)
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered UpdateCustomerById")
 
 	updates := make(map[string]any)
@@ -124,8 +122,4 @@ func (cs CustomerService) UpdateCustomerById(ctx context.Context, request model.
 	}
 
 	return nil
-}
-
-func (cs CustomerService) getZLog(ctx context.Context) *zap.Logger {
-	return utils.FromContext(ctx, cs.Logger)
 }

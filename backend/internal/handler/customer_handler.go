@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,18 +16,16 @@ import (
 
 type CustomerHandler struct {
 	CustomerService service.CustomerService
-	Logger          *zap.Logger
 }
 
-func NewCustomerHandler(customerService service.CustomerService, logger *zap.Logger) CustomerHandler {
+func NewCustomerHandler(customerService service.CustomerService) CustomerHandler {
 	return CustomerHandler{
 		CustomerService: customerService,
-		Logger:          logger.Named("customer_handler"),
 	}
 }
 
 func (ch CustomerHandler) HandleCreateCustomer(w http.ResponseWriter, r *http.Request) {
-	zLog := ch.getZLog(r.Context())
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	var request model.CreateCustomerRequest
 	zLog.Debug("entered HandleCreateCustomer")
 
@@ -62,7 +59,7 @@ func (ch CustomerHandler) HandleCreateCustomer(w http.ResponseWriter, r *http.Re
 }
 
 func (ch CustomerHandler) HandleGetAllCustomers(w http.ResponseWriter, r *http.Request) {
-	zLog := ch.getZLog(r.Context())
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	zLog.Debug("entered HandleGetAllCustomers")
 
 	customers, err := ch.CustomerService.GetAllCustomers(r.Context())
@@ -85,7 +82,7 @@ func (ch CustomerHandler) HandleGetAllCustomers(w http.ResponseWriter, r *http.R
 }
 
 func (ch CustomerHandler) HandleDeleteCustomerById(w http.ResponseWriter, r *http.Request) {
-	zLog := ch.getZLog(r.Context())
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	zLog.Debug("entered HandleDeleteCustomerById")
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
@@ -110,7 +107,7 @@ func (ch CustomerHandler) HandleDeleteCustomerById(w http.ResponseWriter, r *htt
 }
 
 func (ch CustomerHandler) HandleUpdateCustomerById(w http.ResponseWriter, r *http.Request) {
-	zLog := ch.getZLog(r.Context())
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	zLog.Debug("entered HandleUpdateCustomerById")
 
 	idPathVal := r.PathValue("id")
@@ -155,8 +152,4 @@ func (ch CustomerHandler) HandleUpdateCustomerById(w http.ResponseWriter, r *htt
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func (ch CustomerHandler) getZLog(ctx context.Context) *zap.Logger {
-	return utils.FromContext(ctx, ch.Logger)
 }

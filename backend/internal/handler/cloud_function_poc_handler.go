@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -12,18 +11,16 @@ import (
 
 type CloudFunctionHandler struct {
 	CloudFunctionService service.CloudFunctionService
-	Logger               *zap.Logger
 }
 
-func NewCloudFunctionHandler(cloudFunctionService service.CloudFunctionService, logger *zap.Logger) CloudFunctionHandler {
+func NewCloudFunctionHandler(cloudFunctionService service.CloudFunctionService) CloudFunctionHandler {
 	return CloudFunctionHandler{
 		CloudFunctionService: cloudFunctionService,
-		Logger:               logger,
 	}
 }
 
 func (cfh CloudFunctionHandler) HandleGetHelloWorld(w http.ResponseWriter, r *http.Request) {
-	zLog := cfh.getZLog(r.Context())
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	zLog.Debug("entered HandleGetHelloWorld")
 
 	response, err := cfh.CloudFunctionService.GetHelloWorld(r.Context())
@@ -43,8 +40,4 @@ func (cfh CloudFunctionHandler) HandleGetHelloWorld(w http.ResponseWriter, r *ht
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
-}
-
-func (cfh CloudFunctionHandler) getZLog(ctx context.Context) *zap.Logger {
-	return utils.FromContext(ctx, cfh.Logger)
 }

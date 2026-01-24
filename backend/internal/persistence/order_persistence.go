@@ -11,22 +11,20 @@ import (
 
 type OrderPersistence struct {
 	DbHandle *sql.DB
-	Logger   *zap.Logger
 }
 
-func NewOrderPersistence(dbHandle *sql.DB, logger *zap.Logger) OrderPersistence {
+func NewOrderPersistence(dbHandle *sql.DB) OrderPersistence {
 	return OrderPersistence{
 		DbHandle: dbHandle,
-		Logger:   logger,
 	}
 }
 
 func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain model.Order) error {
-	zLog := utils.FromContext(ctx, op.Logger).Named("order_persistence")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered PersistCreateOrder")
 
 	query := `
-		INSERT INTO orders (customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, "orderType")
+		INSERT INTO orders (customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, orderType)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
@@ -43,9 +41,8 @@ func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain m
 		orderDomain.OrderType,
 	)
 	if err != nil {
-		zLog.Error("ExecContext failed: %w", zap.Error(err))
+		zLog.Error("ExecContext failed", zap.Error(err))
 		return err
 	}
-
 	return nil
 }

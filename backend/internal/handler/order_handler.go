@@ -14,18 +14,16 @@ import (
 
 type OrderHandler struct {
 	OrderService service.OrderService
-	Logger       *zap.Logger
 }
 
-func NewOrderHandler(orderService service.OrderService, logger *zap.Logger) OrderHandler {
+func NewOrderHandler(orderService service.OrderService) OrderHandler {
 	return OrderHandler{
 		OrderService: orderService,
-		Logger:       logger,
 	}
 }
 
 func (oh OrderHandler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), oh.Logger).Named("order_handler")
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
 
 	var request model.CreateOrderRequest
 
