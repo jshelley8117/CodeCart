@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jshelley8117/CodeCart/internal/common"
@@ -20,6 +21,7 @@ type OrderService struct {
 func NewOrderService(orderPersistence persistence.OrderPersistence, logger *zap.Logger) OrderService {
 	return OrderService{
 		OrderPersistence: orderPersistence,
+		Logger:           logger,
 	}
 }
 
@@ -53,7 +55,7 @@ func (os OrderService) CreateOrder(ctx context.Context, request model.CreateOrde
 	}
 
 	if err := os.OrderPersistence.PersistCreateOrder(ctx, orderDomainModel); err != nil {
-		zLog.Error("persistence invocation failed: %w", zap.Error(err))
+		zLog.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 	return nil
@@ -65,7 +67,7 @@ func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 
 	orderRows, err := os.OrderPersistence.FetchAllOrders(ctx)
 	if err != nil {
-		zLog.Error("persistence invocation failed: %w", zap.Error(err))
+		zLog.Error("persistence invocation failed", zap.Error(err))
 		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
 	}
 	defer orderRows.Close()
@@ -124,4 +126,55 @@ func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order,
 	}
 
 	return order, nil
+}
+
+func (os OrderService) UpdateOrderById(ctx context.Context, request model.UpdateOrderRequest, id int) error {
+	zLog := utils.FromContext(ctx, os.Logger).Named("order_service")
+	zLog.Debug("entered UpdateOrderById")
+
+	updates := make(map[string]any)
+
+	if request.Status != "" {
+		if !validateStatus(request.Status) {
+			zLog.Error("invalid status", zap.String("order_id", strconv.Itoa(id)))
+			return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+		}
+		updates["status"] = request.Status
+	}
+	if request.TotalPrice != 0 {
+		updates["total_price"] = request.TotalPrice
+	}
+	if request.DeliveryAddress != nil {
+		updates["delivery_address"] = request.DeliveryAddress
+	}
+	if request.AddressId != 0 {
+		updates["address_id"] = request.AddressId
+	}
+	if request.OrderType != "" {
+		if !validateType(request.OrderType) {
+			zLog.Error("invalid order type", zap.String("order_id", strconv.Itoa(id)))
+			return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+		}
+		updates["order_type"] = request.OrderType
+	}
+
+	if len(updates) == 0 {
+		zLog.Error("No updates found", zap.String("order_id", strconv.Itoa(id)))
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+	}
+
+	if err := os.OrderPersistence.PersistUpdateOrderById(ctx, id, updates); err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+	}
+
+	return nil
+}
+
+func validateStatus(status model.OrderStatus) bool {
+	return status == model.OrderStatus("PENDING") || status == model.OrderStatus("DELIVERED") || status == model.OrderStatus("CANCELLED")
+}
+
+func validateType(orderType model.OrderType) bool {
+	return orderType == model.OrderType("DELIVERY") || orderType == model.OrderType("PICKUP")
 }

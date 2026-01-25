@@ -120,3 +120,52 @@ func (oh OrderHandler) HandleFetchOrderById(w http.ResponseWriter, r *http.Reque
 	w.Write(ordersApiResponse)
 
 }
+
+func (oh OrderHandler) HandleUpdateOrderById(w http.ResponseWriter, r *http.Request) {
+	zLog := utils.FromContext(r.Context(), oh.Logger).Named("order_handler")
+	zLog.Debug("entered HandlePersistUpdateOrderById")
+
+	idPathVal := r.PathValue("id")
+	if idPathVal == "" {
+		zLog.Error("ID field in endpoint path parameter is missing")
+		http.Error(w, "ID is empty", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idPathVal)
+	if err != nil {
+		zLog.Error("failed to convert id value from string to integer")
+		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
+		return
+	}
+
+	var request model.UpdateOrderRequest
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		zLog.Warn("request body read failed", zap.Error(err))
+		http.Error(w, common.ERR_REQ_BODY_READ_FAIL, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.Unmarshal(body, &request); err != nil {
+		zLog.Warn("go unmarshaling failed", zap.Error(err))
+		http.Error(w, common.ERR_REQ_UNMARSH_FAIL, http.StatusBadRequest)
+		return
+	}
+
+	if err := validate.Struct(request); err != nil {
+		zLog.Warn("struct validation failed", zap.Error(err))
+		http.Error(w, common.ERR_VALIDATION_FAIL, http.StatusBadRequest)
+		return
+	}
+
+	if err := oh.OrderService.UpdateOrderById(r.Context(), request, id); err != nil {
+		zLog.Error("service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+}
