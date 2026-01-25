@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/jshelley8117/CodeCart/internal/common"
 	"github.com/jshelley8117/CodeCart/internal/model"
@@ -80,4 +81,42 @@ func (oh OrderHandler) HandleGetAllOrders(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(ordersApiResponse)
+}
+
+func (oh OrderHandler) HandleFetchOrderById(w http.ResponseWriter, r *http.Request) {
+	zLog := utils.FromContext(r.Context(), oh.Logger).Named("order_handler")
+	zLog.Debug("entered HandleFetchOrderById")
+
+	idPathVal := r.PathValue("id")
+	if idPathVal == "" {
+		zLog.Error("ID field in endpoint path parameter is missing")
+		http.Error(w, "ID is empty", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idPathVal)
+	if err != nil {
+		zLog.Error("failed to convert id value from string to integer")
+		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
+		return
+	}
+
+	orders, err := oh.OrderService.FetchOrderById(r.Context(), id)
+	if err != nil {
+		zLog.Warn("Service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
+		return
+	}
+
+	ordersApiResponse, err := json.Marshal(orders)
+	if err != nil {
+		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(ordersApiResponse)
+
 }

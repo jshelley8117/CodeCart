@@ -97,3 +97,31 @@ func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 	}
 	return orders, nil
 }
+
+func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order, error) {
+	zLog := utils.FromContext(ctx, os.Logger).Named("order_service")
+	zLog.Debug("entered FetchOrderById")
+
+	orderRow := os.OrderPersistence.FetchOrderById(ctx, id)
+	if orderRow == nil {
+		return model.Order{}, fmt.Errorf("order with id %d not found", id)
+	}
+
+	var order model.Order
+	if err := orderRow.Scan(
+		&order.Id,
+		&order.CustomerId,
+		&order.Status,
+		&order.TotalPrice,
+		&order.DeliveryAddress,
+		&order.CreatedAt,
+		&order.UpdatedAt,
+		&order.AddressId,
+		&order.OrderType,
+	); err != nil {
+		zLog.Error("scan operation failed", zap.Error(err))
+		return model.Order{}, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+	}
+
+	return order, nil
+}
