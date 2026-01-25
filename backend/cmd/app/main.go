@@ -32,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	if *dbMode == "" {
-		log.Fatal("Error: -db flag is required. Use '-db=gcp' or 'db=local' when spinning up the server")
+		log.Fatal("Error: -db flag is required. Use '-db=gcp' or '-db=local' when spinning up the server")
 	}
 
 	if err := godotenv.Load("./.env"); err != nil {
