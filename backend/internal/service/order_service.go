@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/jshelley8117/CodeCart/internal/common"
@@ -68,7 +67,7 @@ func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 	orderRows, err := os.OrderPersistence.FetchAllOrders(ctx)
 	if err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
-		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+		return nil, err
 	}
 	defer orderRows.Close()
 
@@ -88,14 +87,14 @@ func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 			&order.OrderType,
 		); err != nil {
 			zLog.Error("scan operation failed", zap.Error(err))
-			return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+			return nil, err
 		}
 		orders = append(orders, order)
 	}
 
 	if err := orderRows.Err(); err != nil {
 		zLog.Error("error occured while iterating through sql rows", zap.Error(err))
-		return nil, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+		return nil, err
 	}
 	return orders, nil
 }
@@ -106,7 +105,8 @@ func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order,
 
 	orderRow := os.OrderPersistence.FetchOrderById(ctx, id)
 	if orderRow == nil {
-		return model.Order{}, fmt.Errorf("order with id %d not found", id)
+		zLog.Error("order not found", zap.Int("order_id", id))
+		return model.Order{}, fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 	}
 
 	var order model.Order
@@ -122,7 +122,7 @@ func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order,
 		&order.OrderType,
 	); err != nil {
 		zLog.Error("scan operation failed", zap.Error(err))
-		return model.Order{}, fmt.Errorf(common.ERR_CLIENT_DB_RETRIEVAL_FAIL)
+		return model.Order{}, err
 	}
 
 	return order, nil
@@ -136,7 +136,7 @@ func (os OrderService) UpdateOrderById(ctx context.Context, request model.Update
 
 	if request.Status != "" {
 		if !validateStatus(request.Status) {
-			zLog.Error("invalid status", zap.String("order_id", strconv.Itoa(id)))
+			zLog.Error("invalid status", zap.Int("order_id", id))
 			return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 		}
 		updates["status"] = request.Status
@@ -152,20 +152,20 @@ func (os OrderService) UpdateOrderById(ctx context.Context, request model.Update
 	}
 	if request.OrderType != "" {
 		if !validateType(request.OrderType) {
-			zLog.Error("invalid order type", zap.String("order_id", strconv.Itoa(id)))
+			zLog.Error("invalid order type", zap.Int("order_id", id))
 			return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 		}
 		updates["order_type"] = request.OrderType
 	}
 
 	if len(updates) == 0 {
-		zLog.Error("No updates found", zap.String("order_id", strconv.Itoa(id)))
+		zLog.Error("No updates found", zap.Int("order_id", id))
 		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
 	}
 
 	if err := os.OrderPersistence.PersistUpdateOrderById(ctx, id, updates); err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
-		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+		return err
 	}
 
 	return nil
