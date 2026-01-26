@@ -19,7 +19,6 @@ type OrderService struct {
 func NewOrderService(orderPersistence persistence.OrderPersistence) OrderService {
 	return OrderService{
 		OrderPersistence: orderPersistence,
-		Logger:           logger,
 	}
 }
 
@@ -60,7 +59,7 @@ func (os OrderService) CreateOrder(ctx context.Context, request model.CreateOrde
 }
 
 func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) {
-	zLog := utils.FromContext(ctx, os.Logger).Named("order_service")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered GetAllOrders")
 
 	orderRows, err := os.OrderPersistence.FetchAllOrders(ctx)
@@ -99,7 +98,7 @@ func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 }
 
 func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order, error) {
-	zLog := utils.FromContext(ctx, os.Logger).Named("order_service")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered FetchOrderById")
 
 	orderRow := os.OrderPersistence.FetchOrderById(ctx, id)
@@ -128,7 +127,7 @@ func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order,
 }
 
 func (os OrderService) UpdateOrderById(ctx context.Context, request model.UpdateOrderRequest, id int) error {
-	zLog := utils.FromContext(ctx, os.Logger).Named("order_service")
+	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered UpdateOrderById")
 
 	updates := make(map[string]any)
