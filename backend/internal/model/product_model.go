@@ -29,10 +29,20 @@ type Product struct {
 type CreateProductRequest struct {
 	Name            string   `json:"name" validate:"required"`
 	Description     string   `json:"description"`
-	UnitPrice       int      `json:"price" validate:"required"`
+	UnitPrice       int      `json:"unit_price" validate:"required"`
 	Category        Category `json:"category" validate:"required"`
 	Brand           string   `json:"brand" validate:"required"`
 	IsAgeRestricted bool     `json:"is_age_restricted" validate:"required"`
+}
+
+type UpdateProductRequest struct {
+	Name            string   `json:"name"`
+	Description     string   `json:"description"`
+	UnitPrice       int      `json:"unit_price"`
+	Category        Category `json:"category"`
+	Brand           string   `json:"brand"`
+	IsAgeRestricted bool     `json:"is_age_restricted"`
+	IsActive        bool     `json:"is_active"`
 }
 
 type ProductVariant struct {
@@ -45,4 +55,17 @@ type ProductVariant struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	ImagePath string    `json:"image_path"`
 	ProductId int       `json:"product_id"`
+}
+
+type CreateProductVariant struct {
+	Size      string `json:"size"`
+	Flavor    string `json:"flavor"`
+	ProductId int    `json:"product_id"`
+}
+
+type UpdateProductVariant struct {
+	Size      string `json:"size"`
+	Flavor    string `json:"flavor"`
+	IsActive  bool   `json:"is_active"`
+	ImagePath string `json:"image_path"`
 }

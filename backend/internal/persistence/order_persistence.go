@@ -77,8 +77,7 @@ func (op OrderPersistence) FetchOrderById(ctx context.Context, id int) *sql.Row 
 		WHERE id = $1
 	`
 
-	row := op.DbHandle.QueryRowContext(ctx, query, id)
-	return row
+	return op.DbHandle.QueryRowContext(ctx, query, id)
 }
 
 func (op OrderPersistence) PersistUpdateOrderById(ctx context.Context, id int, updates map[string]any) error {
