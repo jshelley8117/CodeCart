@@ -105,8 +105,8 @@ func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order,
 
 	orderRow := os.OrderPersistence.FetchOrderById(ctx, id)
 	if orderRow == nil {
-		zLog.Error("order not found", zap.Int("order_id", id))
-		return model.Order{}, fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+		zLog.Warn("order not found", zap.Int("order_id", id))
+		return model.Order{}, nil
 	}
 
 	var order model.Order
@@ -137,7 +137,7 @@ func (os OrderService) UpdateOrderById(ctx context.Context, request model.Update
 	if request.Status != "" {
 		if !validateStatus(request.Status) {
 			zLog.Error("invalid status", zap.Int("order_id", id))
-			return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+			return fmt.Errorf("invalid status: %s", request.Status)
 		}
 		updates["status"] = request.Status
 	}
@@ -160,7 +160,7 @@ func (os OrderService) UpdateOrderById(ctx context.Context, request model.Update
 
 	if len(updates) == 0 {
 		zLog.Error("No updates found", zap.Int("order_id", id))
-		return fmt.Errorf(common.ERR_CLIENT_DB_PERSISTENCE_FAIL)
+		return fmt.Errorf("no updates found")
 	}
 
 	if err := os.OrderPersistence.PersistUpdateOrderById(ctx, id, updates); err != nil {
