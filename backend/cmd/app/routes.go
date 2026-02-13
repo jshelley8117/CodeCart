@@ -56,4 +56,18 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	mux.HandleFunc("GET /api/v1/orders/{id}", orderHandler.HandleGetAllOrders)
 	mux.HandleFunc("PATCH /api/v1/orders/{id}", orderHandler.HandleUpdateOrderById)
 
+	// ---------- PRODUCTS DOMAIN ----------
+	productPersistence := persistence.NewProductPersistence(resourceConfig.GCloudDB)
+	productService := service.NewProductService(productPersistence)
+	productHandler := handler.NewProductHandler(productService)
+
+	mux.HandleFunc("POST /api/v1/products", productHandler.HandleCreateProduct)
+	mux.HandleFunc("GET /api/v1/products", productHandler.HandleFetchAllProducts)
+	mux.HandleFunc("GET /api/v1/products/{id}", productHandler.HandleFetchProductById)
+	mux.HandleFunc("GET /api/v1/products/{id}/variants", productHandler.HandleFetchAllProductVariantsByProductId)
+	mux.HandleFunc("PATCH /api/v1/products/{id}", productHandler.HandleUpdateProductById)
+	mux.HandleFunc("PATCH /api/v1/product-variants/{id}", productHandler.HandleUpdateProductVariantById)
+	mux.HandleFunc("DELETE /api/v1/products/{id}", productHandler.HandleDeleteProductById)
+	mux.HandleFunc("DELETE /api/v1/product-variants/{id}", productHandler.HandleDeleteProductVariantById)
+
 }

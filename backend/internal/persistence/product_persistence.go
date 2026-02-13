@@ -25,9 +25,12 @@ func (pp ProductPersistence) PersistCreateProduct(ctx context.Context, productDo
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered PersistCreateProduct")
 
+	// ERROR: changed is_age_restricted -> age_restricted
+	// ERROR: remmoved is_active
+	// ERROR: removed $9 from values
 	query := `
-		INSERT INTO products (name, description, unit_price, category, brand, is_age_restricted, created_at, updated_at, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO products (name, description, unit_price, category, brand, age_restricted, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
 	_, err := pp.DbHandle.ExecContext(
@@ -41,7 +44,7 @@ func (pp ProductPersistence) PersistCreateProduct(ctx context.Context, productDo
 		productDomain.IsAgeRestricted,
 		productDomain.CreatedAt,
 		productDomain.UpdatedAt,
-		productDomain.IsActive,
+		// productDomain.IsActive, // ERROR: Commented out due to not being a column
 	)
 	if err != nil {
 		zLog.Error("ExecContext failed", zap.Error(err))
@@ -52,7 +55,7 @@ func (pp ProductPersistence) PersistCreateProduct(ctx context.Context, productDo
 
 func (pp ProductPersistence) FetchAllProducts(ctx context.Context, page, pageSize int) (*sql.Rows, int64, error) {
 	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered FetchAllProducts")
+	zLog.Debug("Entered PersistenceFetchAllProducts")
 
 	var total int64
 	countQuery := "SELECT COUNT(*) FROM products"
@@ -63,8 +66,17 @@ func (pp ProductPersistence) FetchAllProducts(ctx context.Context, page, pageSiz
 
 	offset := (page - 1) * pageSize
 
+	// ERROR: removed is_active
+	// ERROR: changed is_age_restricted -> age_restricted
+	// REMOVED: `LIMIT $1 OFFSET $2` from line 76
+	// REMOVED: `ORDER BY created_at DESC` from line 75
+	// query := `
+	// 	SELECT id, name, description, unit_price, category, brand, age_restricted, created_at, updated_at,
+	// 	FROM products
+	// `
+
 	query := `
-		SELECT id, name, description, unit_price, category, brand, is_age_restricted, created_at, updated_at, is_active
+		SELECT id, name, description, unit_price, category, brand, age_restricted, created_at, updated_at
 		FROM products
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2
@@ -83,7 +95,7 @@ func (pp ProductPersistence) FetchProductById(ctx context.Context, id int) *sql.
 	zLog.Debug("Entered FetchProductById")
 
 	query := `
-		SELECT id, name, description, unit_price, category, brand, is_age_restricted, created_at, updated_at, is_active
+		SELECT id, name, description, unit_price, category, brand, age_restricted, created_at, updated_at
 		FROM products
 		WHERE id = $1
 	`
@@ -91,22 +103,33 @@ func (pp ProductPersistence) FetchProductById(ctx context.Context, id int) *sql.
 	return pp.DbHandle.QueryRowContext(ctx, query, id)
 }
 
-func (pp ProductPersistence) FetchAllProductVariantsByProductId(ctx context.Context, productId int) (*sql.Rows, error) {
+func (pp ProductPersistence) FetchAllProductVariantsByProductId(ctx context.Context, productId, page, pageSize int) (*sql.Rows, int64, error) {
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered FetchAllProductVariantsByProductId")
+
+	var total int64
+	countQuery := "SELECT COUNT(*) FROM product_variants WHERE product_id = $1"
+	if err := pp.DbHandle.QueryRowContext(ctx, countQuery, productId).Scan(&total); err != nil {
+		zLog.Error("QueryRowContext failed on the pagination count query", zap.Error(err))
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
 
 	query := `
 		SELECT id, sku, size, flavor, is_active, created_at, updated_at, image_path, product_id
 		FROM product_variants
-		WHERE id = $1
+		WHERE product_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3
 	`
 
-	rows, err := pp.DbHandle.QueryContext(ctx, query, productId)
+	rows, err := pp.DbHandle.QueryContext(ctx, query, productId, pageSize, offset)
 	if err != nil {
 		zLog.Error("QueryContext failed", zap.Error(err))
-		return nil, err
+		return nil, 0, err
 	}
-	return rows, nil
+	return rows, total, nil
 }
 
 func (pp ProductPersistence) PersistUpdateProductById(ctx context.Context, productId int, updates map[string]any) error {
@@ -114,13 +137,12 @@ func (pp ProductPersistence) PersistUpdateProductById(ctx context.Context, produ
 	zLog.Debug("Entered PersistUpdateProductById")
 
 	allowedFields := map[string]bool{
-		"name":              true,
-		"description":       true,
-		"unit_price":        true,
-		"category":          true,
-		"brand":             true,
-		"is_age_restricted": true,
-		"is_active":         true,
+		"name":           true,
+		"description":    true,
+		"unit_price":     true,
+		"category":       true,
+		"brand":          true,
+		"age_restricted": true,
 	}
 
 	query := `
