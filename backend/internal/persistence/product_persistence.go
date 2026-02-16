@@ -242,6 +242,22 @@ func (pp ProductPersistence) PersistDeleteProductById(ctx context.Context, produ
 	return nil
 }
 
+func (pp ProductPersistence) PersistDeleteVariantsByProductId(ctx context.Context, productId int) error {
+	zLog := utils.FromContext(ctx, zap.NewNop())
+	zLog.Debug("Entered PersistDeleteVariantsByProductId")
+
+	query := `
+		DELETE FROM product_variants
+		WHERE product_id = $1
+	`
+
+	if _, err := pp.DbHandle.ExecContext(ctx, query, productId); err != nil {
+		zLog.Error("ExecContext failed for PersistDeleteVariantsByProductId", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
 func (pp ProductPersistence) PersistDeleteProductVariantById(ctx context.Context, variantId int) error {
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered PersistDeleteProductVariantById")

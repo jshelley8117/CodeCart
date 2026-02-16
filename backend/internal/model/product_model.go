@@ -32,7 +32,7 @@ type CreateProductRequest struct {
 	UnitPrice       float64  `json:"unit_price" validate:"required"`
 	Category        Category `json:"category" validate:"required"`
 	Brand           string   `json:"brand" validate:"required"`
-	IsAgeRestricted bool     `json:"is_age_restricted"` // ERROR: removed "required" validation tag
+	IsAgeRestricted *bool    `json:"is_age_restricted" validate:"required"`
 }
 
 type UpdateProductRequest struct {
@@ -58,9 +58,10 @@ type ProductVariant struct {
 }
 
 type CreateProductVariant struct {
-	Size      string `json:"size"`
-	Flavor    string `json:"flavor"`
-	ProductId int    `json:"product_id"`
+	Size      string `json:"size" validate:"required"`
+	Flavor    string `json:"flavor" validate:"required"`
+	ProductId int    `json:"product_id" validate:"required"`
+	ImagePath string `json:"image_path" validate:"required"`
 }
 
 type UpdateProductVariant struct {

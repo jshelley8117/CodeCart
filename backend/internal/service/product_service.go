@@ -22,7 +22,7 @@ func NewProductService(productPersistence persistence.ProductPersistence) Produc
 	}
 }
 
-func (ps ProductService) ServiceCreateProduct(ctx context.Context, request model.CreateProductRequest) error {
+func (ps ProductService) CreateProduct(ctx context.Context, request model.CreateProductRequest) error {
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered ServiceCreateProduct")
 
@@ -32,20 +32,22 @@ func (ps ProductService) ServiceCreateProduct(ctx context.Context, request model
 		UnitPrice:       request.UnitPrice,
 		Category:        request.Category,
 		Brand:           request.Brand,
-		IsAgeRestricted: request.IsAgeRestricted,
+		IsAgeRestricted: *request.IsAgeRestricted,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 		IsActive:        true,
 	}
 
-	if err := ps.ProductPersistence.PersistCreateProduct(ctx, productDomainModel); err != nil {
+	err := ps.ProductPersistence.PersistCreateProduct(ctx, productDomainModel)
+	if err != nil {
+		zLog.Error("persistance invocation failed", zap.Error(err))
 		return err
 	}
 
 	return nil
 }
 
-func (ps ProductService) ServiceFetchAllProducts(ctx context.Context, page, pageSize int) ([]model.Product, int64, error) {
+func (ps ProductService) FetchAllProducts(ctx context.Context, page, pageSize int) ([]model.Product, int64, error) {
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered ServiceFetchAllProducts")
 
@@ -110,7 +112,7 @@ func (ps ProductService) ServiceFetchProductById(ctx context.Context, id int) (m
 	return product, nil
 }
 
-func (ps ProductService) ServiceUpdateProductById(ctx context.Context, id int, request model.UpdateProductRequest) error {
+func (ps ProductService) UpdateProductById(ctx context.Context, id int, request model.UpdateProductRequest) error {
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered ServiceUpdateProductById")
 
@@ -148,7 +150,7 @@ func (ps ProductService) ServiceUpdateProductById(ctx context.Context, id int, r
 	return nil
 }
 
-func (ps ProductService) ServiceFetchAllProductVariantsByProductId(ctx context.Context, productId, page, pageSize int) ([]model.ProductVariant, int64, error) {
+func (ps ProductService) FetchAllProductVariantsByProductId(ctx context.Context, productId, page, pageSize int) ([]model.ProductVariant, int64, error) {
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("entered ServiceFetchAllProductVariantsByProductId")
 
@@ -193,9 +195,9 @@ func (ps ProductService) ServiceFetchAllProductVariantsByProductId(ctx context.C
 	return variants, total, nil
 }
 
-func (ps ProductService) ServiceUpdateProductVariantById(ctx context.Context, id int, request model.UpdateProductVariant) error {
+func (ps ProductService) UpdateProductVariantById(ctx context.Context, id int, request model.UpdateProductVariant) error {
 	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceUpdateProductVariantById")
+	zLog.Debug("entered UpdateProductVariantById")
 
 	updates := make(map[string]any)
 
@@ -225,9 +227,14 @@ func (ps ProductService) ServiceUpdateProductVariantById(ctx context.Context, id
 	return nil
 }
 
-func (ps ProductService) ServiceDeleteProductById(ctx context.Context, id int) error {
+func (ps ProductService) DeleteProductById(ctx context.Context, id int) error {
 	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceDeleteProductById")
+	zLog.Debug("entered DeleteProductById")
+
+	if err := ps.ProductPersistence.PersistDeleteVariantsByProductId(ctx, id); err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return err
+	}
 
 	if err := ps.ProductPersistence.PersistDeleteProductById(ctx, id); err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))
@@ -237,9 +244,9 @@ func (ps ProductService) ServiceDeleteProductById(ctx context.Context, id int) e
 	return nil
 }
 
-func (ps ProductService) ServiceDeleteProductVariantById(ctx context.Context, id int) error {
+func (ps ProductService) DeleteProductVariantById(ctx context.Context, id int) error {
 	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceDeleteProductVariantById")
+	zLog.Debug("entered DeleteProductVariantById")
 
 	if err := ps.ProductPersistence.PersistDeleteProductVariantById(ctx, id); err != nil {
 		zLog.Error("persistence invocation failed", zap.Error(err))

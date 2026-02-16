@@ -42,14 +42,13 @@ func (ph ProductHandler) HandleCreateProduct(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// ERROR: Request fails here
 	if err := validate.Struct(request); err != nil {
 		zLog.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
-	if err := ph.ProductService.ServiceCreateProduct(r.Context(), request); err != nil {
+	if err := ph.ProductService.CreateProduct(r.Context(), request); err != nil {
 		zLog.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
 		return
@@ -58,36 +57,30 @@ func (ph ProductHandler) HandleCreateProduct(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (ph ProductHandler) HandleFetchAllProducts(w http.ResponseWriter, r *http.Request) {
+func (ph ProductHandler) HandleGetAllProducts(w http.ResponseWriter, r *http.Request) {
 	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleFetchAllProducts")
+	zLog.Debug("entered HandleGetAllProducts")
 
-	page := 1
-	pageSize := 10
-
-	if pageParam := r.URL.Query().Get("page"); pageParam != "" {
-		if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
-			page = p
-		}
+	page, pageSize, err := utils.ParsePaginationInput(r.Context(), r)
+	if err != nil {
+		zLog.Error("failed to parse pagination input", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
+		return
 	}
 
-	if pageSizeParam := r.URL.Query().Get("page_size"); pageSizeParam != "" {
-		if ps, err := strconv.Atoi(pageSizeParam); err == nil && ps > 0 && ps <= 100 {
-			pageSize = ps
-		}
-	}
-
-	products, total, err := ph.ProductService.ServiceFetchAllProducts(r.Context(), page, pageSize)
+	products, total, err := ph.ProductService.FetchAllProducts(r.Context(), page, pageSize)
 	if err != nil {
 		zLog.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
-	totalPages := int(total) / pageSize
-	if int(total)%pageSize != 0 {
-		totalPages++
-	}
+	// totalPages := int(total) / pageSize
+	// if int(total)%pageSize != 0 {
+	// 	totalPages++
+	// }
+
+	totalPages := utils.CalculateTotalPages(int(total), pageSize)
 
 	response := common.PaginatedResponse{
 		Data:       products,
@@ -109,9 +102,9 @@ func (ph ProductHandler) HandleFetchAllProducts(w http.ResponseWriter, r *http.R
 	w.Write(productsApiResponse)
 }
 
-func (ph ProductHandler) HandleFetchProductById(w http.ResponseWriter, r *http.Request) {
+func (ph ProductHandler) HandleGetProductById(w http.ResponseWriter, r *http.Request) {
 	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleFetchProductById")
+	zLog.Debug("entered HandleGetProductById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
@@ -179,7 +172,7 @@ func (ph ProductHandler) HandleUpdateProductById(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if err := ph.ProductService.ServiceUpdateProductById(r.Context(), id, request); err != nil {
+	if err := ph.ProductService.UpdateProductById(r.Context(), id, request); err != nil {
 		zLog.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
@@ -188,9 +181,9 @@ func (ph ProductHandler) HandleUpdateProductById(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusOK)
 }
 
-func (ph ProductHandler) HandleFetchAllProductVariantsByProductId(w http.ResponseWriter, r *http.Request) {
+func (ph ProductHandler) HandleGetAllProductVariantsByProductId(w http.ResponseWriter, r *http.Request) {
 	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleFetchAllProductVariantsByProductId")
+	zLog.Debug("entered HandleGetAllProductVariantsByProductId")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
@@ -206,32 +199,21 @@ func (ph ProductHandler) HandleFetchAllProductVariantsByProductId(w http.Respons
 		return
 	}
 
-	page := 1
-	pageSize := 10
-
-	if pageParam := r.URL.Query().Get("page"); pageParam != "" {
-		if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
-			page = p
-		}
+	page, pageSize, err := utils.ParsePaginationInput(r.Context(), r)
+	if err != nil {
+		zLog.Error("failed to parse pagination input", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
+		return
 	}
 
-	if pageSizeParam := r.URL.Query().Get("page_size"); pageSizeParam != "" {
-		if ps, err := strconv.Atoi(pageSizeParam); err == nil && ps > 0 && ps <= 100 {
-			pageSize = ps
-		}
-	}
-
-	variants, total, err := ph.ProductService.ServiceFetchAllProductVariantsByProductId(r.Context(), productId, page, pageSize)
+	variants, total, err := ph.ProductService.FetchAllProductVariantsByProductId(r.Context(), productId, page, pageSize)
 	if err != nil {
 		zLog.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
-	totalPages := int(total) / pageSize
-	if int(total)%pageSize != 0 {
-		totalPages++
-	}
+	totalPages := utils.CalculateTotalPages(int(total), pageSize)
 
 	response := common.PaginatedResponse{
 		Data:       variants,
@@ -286,7 +268,7 @@ func (ph ProductHandler) HandleUpdateProductVariantById(w http.ResponseWriter, r
 		return
 	}
 
-	if err := ph.ProductService.ServiceUpdateProductVariantById(r.Context(), id, request); err != nil {
+	if err := ph.ProductService.UpdateProductVariantById(r.Context(), id, request); err != nil {
 		zLog.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
@@ -313,7 +295,7 @@ func (ph ProductHandler) HandleDeleteProductById(w http.ResponseWriter, r *http.
 		return
 	}
 
-	err = ph.ProductService.ServiceDeleteProductById(r.Context(), id)
+	err = ph.ProductService.DeleteProductById(r.Context(), id)
 	if err != nil {
 		zLog.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
@@ -342,7 +324,7 @@ func (ph ProductHandler) HandleDeleteProductVariantById(w http.ResponseWriter, r
 		return
 	}
 
-	err = ph.ProductService.ServiceDeleteProductVariantById(r.Context(), id)
+	err = ph.ProductService.DeleteProductVariantById(r.Context(), id)
 	if err != nil {
 		zLog.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
