@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -25,7 +24,9 @@ func NewAddressService(addressPersistence persistence.AddressPersistence) Addres
 }
 
 func (as AddressService) CreateAddress(ctx context.Context, request model.CreateAddressRequest) error {
-	log.Println("Entered CreateAddress")
+	zLog := utils.FromContext(ctx, zap.NewNop())
+	zLog.Debug("entered CreateAddress")
+
 	addressDomainModel := model.Address{
 		StreetAddress: strings.ToLower(request.StreetAddress),
 		City:          strings.ToLower(request.City),
@@ -84,4 +85,83 @@ func (as AddressService) GetAllAddresses(ctx context.Context) ([]model.Address, 
 	}
 
 	return addresses, nil
+}
+
+func (as AddressService) GetAddressById(ctx context.Context, id int) (model.Address, error) {
+	zLog := utils.FromContext(ctx, zap.NewNop())
+	zLog.Debug("Entered GetAddressById")
+
+	addressRow := as.AddressPersistence.PersistGetAddressById(ctx, id)
+	if addressRow == nil {
+		zLog.Warn("order not found", zap.Int("order_id", id))
+		return model.Address{}, nil
+	}
+
+	var address model.Address
+	if err := addressRow.Scan(
+		&address.StreetAddress,
+		&address.City,
+		&address.State,
+		&address.ZipCode,
+		&address.Country,
+		&address.UserId,
+		&address.Id,
+		&address.IsDefault,
+		&address.CreatedAt,
+		&address.UpdatedAt,
+	); err != nil {
+		zLog.Error("scan operation failed", zap.Error(err))
+		return model.Address{}, err
+	}
+
+	return address, nil
+}
+
+func (as AddressService) UpdateAddressById(ctx context.Context, request model.UpdateAddressRequest, id int) error {
+	zLog := utils.FromContext(ctx, zap.NewNop())
+	zLog.Debug("Entered UpdateAddressById")
+
+	updates := make(map[string]any)
+
+	if request.StreetAddress != "" {
+		updates["street_address"] = request.StreetAddress
+	}
+	if request.City != "" {
+		updates["street_address"] = request.City
+	}
+	if request.State != "" {
+		updates["street_address"] = request.State
+	}
+	if request.ZipCode != "" {
+		updates["street_address"] = request.ZipCode
+	}
+	if request.Country != "" {
+		updates["street_address"] = request.Country
+	}
+	if request.IsDefault != nil {
+		updates["street_address"] = request.IsDefault
+	}
+
+	if len(updates) == 0 {
+		zLog.Error("No updates found", zap.Int("address_id", id))
+		return fmt.Errorf("no updates found")
+	}
+
+	if err := as.AddressPersistence.PersistUpdateAddressById(ctx, id, updates); err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (as AddressService) DeleteAddressById(ctx context.Context, id int) error {
+	zLog := utils.FromContext(ctx, zap.NewNop())
+	zLog.Debug("Entered DeleteAddressById")
+
+	if err := as.AddressPersistence.PersistDeleteAddressById(ctx, id); err != nil {
+		zLog.Error("persistence invocation failed", zap.Error(err))
+		return fmt.Errorf(common.ERR_CLIENT_DB_DELETE_FAIL)
+	}
+	return nil
 }

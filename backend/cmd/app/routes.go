@@ -35,6 +35,9 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 
 	mux.HandleFunc("POST /api/v1/addresses", addressHandler.HandleCreateAddress)
 	mux.HandleFunc("GET /api/v1/addresses", addressHandler.HandleGetAllAddresses)
+	mux.HandleFunc("GET /api/v1/addresses/{id}", addressHandler.HandleGetAddressById)
+	mux.HandleFunc("PATCH /api/v1/addresses/{id}", addressHandler.HandleUpdateAddressById)
+	mux.HandleFunc("DELETE /api/v1/addresses/{id}", addressHandler.HandleDeleteAddressById)
 
 	// ---------- CLOUD FUNCTION POC DOMAIN ----------
 	cloudFunctionClient := client.NewCloudFunctionClient(resourceConfig.TokenSource, os.Getenv("GCP_IMP_SA"))

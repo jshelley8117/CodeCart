@@ -65,3 +65,9 @@ func (ap AddressPersistence) FetchAllAddresses(ctx context.Context) (*sql.Rows, 
 	}
 	return rows, nil
 }
+
+func (ap AddressPersistence) PersistGetAddressById(ctx context.Context, id int) *sql.Row
+
+func (ap AddressPersistence) PersistUpdateAddressById(ctx context.Context, id int, updates map[string]any) error
+
+func (ap AddressPersistence) PersistDeleteAddressById(ctx context.Context, id int) error

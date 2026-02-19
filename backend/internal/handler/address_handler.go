@@ -65,7 +65,7 @@ func (ah AddressHandler) HandleGetAllAddresses(w http.ResponseWriter, r *http.Re
 
 	addressesApiResponse, err := json.Marshal(addresses)
 	if err != nil {
-		zLog.Error("go marshaling failed", zap.Error(err))
+		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_RETRIEVAL_FAIL, http.StatusInternalServerError)
 		return
 	}

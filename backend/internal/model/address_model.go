@@ -25,3 +25,12 @@ type CreateAddressRequest struct {
 	ZipCode       string `json:"zip_code" validate:"required"`
 	Country       string `json:"country" validate:"required"`
 }
+
+type UpdateAddressRequest struct {
+	StreetAddress string `json:"street_address"`
+	City          string `json:"city"`
+	State         string `json:"state"`
+	ZipCode       string `json:"zip_code"`
+	Country       string `json:"country"`
+	IsDefault     *bool  `json:"is_default"`
+}
