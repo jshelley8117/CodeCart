@@ -64,7 +64,7 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	mux.HandleFunc("POST /api/v1/products", productHandler.HandleCreateProduct)
 	mux.HandleFunc("GET /api/v1/products", productHandler.HandleGetAllProducts)
 	mux.HandleFunc("GET /api/v1/products/{id}", productHandler.HandleGetProductById)
-	mux.HandleFunc("GET /api/v1/products/variants/{id}", productHandler.HandleGetAllProductVariantsByProductId)
+	mux.HandleFunc("GET /api/v1/products/{id}/variants", productHandler.HandleGetAllProductVariantsByProductId)
 	mux.HandleFunc("PATCH /api/v1/products/{id}", productHandler.HandleUpdateProductById)
 	mux.HandleFunc("PATCH /api/v1/products/variants/{id}", productHandler.HandleUpdateProductVariantById)
 	mux.HandleFunc("DELETE /api/v1/products/{id}", productHandler.HandleDeleteProductById)

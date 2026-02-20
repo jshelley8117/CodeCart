@@ -25,9 +25,6 @@ func (pp ProductPersistence) PersistCreateProduct(ctx context.Context, productDo
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered PersistCreateProduct")
 
-	// ERROR: changed is_age_restricted -> age_restricted
-	// ERROR: remmoved is_active
-	// ERROR: removed $9 from values
 	query := `
 		INSERT INTO products (name, description, unit_price, category, brand, age_restricted, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -44,7 +41,6 @@ func (pp ProductPersistence) PersistCreateProduct(ctx context.Context, productDo
 		productDomain.IsAgeRestricted,
 		productDomain.CreatedAt,
 		productDomain.UpdatedAt,
-		// productDomain.IsActive, // ERROR: Commented out due to not being a column
 	)
 	if err != nil {
 		zLog.Error("ExecContext failed", zap.Error(err))
@@ -65,15 +61,6 @@ func (pp ProductPersistence) FetchAllProducts(ctx context.Context, page, pageSiz
 	}
 
 	offset := (page - 1) * pageSize
-
-	// ERROR: removed is_active
-	// ERROR: changed is_age_restricted -> age_restricted
-	// REMOVED: `LIMIT $1 OFFSET $2` from line 76
-	// REMOVED: `ORDER BY created_at DESC` from line 75
-	// query := `
-	// 	SELECT id, name, description, unit_price, category, brand, age_restricted, created_at, updated_at,
-	// 	FROM products
-	// `
 
 	query := `
 		SELECT id, name, description, unit_price, category, brand, age_restricted, created_at, updated_at

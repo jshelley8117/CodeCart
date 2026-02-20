@@ -75,11 +75,6 @@ func (ph ProductHandler) HandleGetAllProducts(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// totalPages := int(total) / pageSize
-	// if int(total)%pageSize != 0 {
-	// 	totalPages++
-	// }
-
 	totalPages := utils.CalculateTotalPages(int(total), pageSize)
 
 	response := common.PaginatedResponse{

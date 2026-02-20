@@ -5,11 +5,18 @@ import "time"
 type Category string
 
 const (
-	Grocery            Category = "GROCERY"
-	GeneralMerchandise Category = "GENERAL_MERCHANDISE"
-	Produce            Category = "PRODUCE"
-	Seafood            Category = "SEAFOOD"
-	MeatMarket         Category = "MEAT_MARKET"
+	Produce         Category = "PRODUCE"
+	Meat            Category = "MEAT"
+	Seafood         Category = "SEAFOOD"
+	Bakery          Category = "BAKERY"
+	Dairy           Category = "DAIRY"
+	Deli            Category = "DELI"
+	Pantry          Category = "PANTRY"
+	Frozen          Category = "FROZEN"
+	Beverages       Category = "BEVERAGES"
+	HomeEssentials  Category = "HOME_ESSENTIALS"
+	HealthAndBeauty Category = "HEALTH_AND_BEAUTY"
+	Baby            Category = "BABY"
 )
 
 type Product struct {
