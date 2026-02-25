@@ -5,31 +5,39 @@ import (
 	"time"
 )
 
-type OrderStatus string
+type PaymentStatus string
 
 const (
-	OrderStatusConfirmed OrderStatus = "CONFIRMED"
-	OrderStatusPending   OrderStatus = "PENDING"
-	OrderStatusCanceled  OrderStatus = "CANCELED"
+	PaymentStatusReceived PaymentStatus = "RECEIVED"
+	PaymentStatusPending  PaymentStatus = "PENDING"
+)
+
+type FulfillmentStatus string
+
+const (
+	FulfillmentStatusComplete      FulfillmentStatus = "COMPLETE"
+	FulfillmentStatusInProgress    FulfillmentStatus = "INPROGRESS"
+	FulfillmentStatusNotYetStarted FulfillmentStatus = "NOTYETSTARTED"
 )
 
 type OrderType string
 
 const (
-	OrderTypePickup   OrderStatus = "PICKUP"
-	OrderTypeDelivery OrderStatus = "DELIVERY"
+	OrderTypePickup   OrderType = "PICKUP"
+	OrderTypeDelivery OrderType = "DELIVERY"
 )
 
 type Order struct {
-	Id              int             `json:"id"`
-	CustomerId      int             `json:"customer_id"`
-	Status          OrderStatus     `json:"status"`
-	TotalPrice      float64         `json:"total_price"`
-	DeliveryAddress json.RawMessage `json:"delivery_address"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
-	AddressId       int             `json:"address_id"`
-	OrderType       OrderType       `json:"order_type"`
+	Id                int               `json:"id"`
+	CustomerId        int               `json:"customer_id"`
+	PaymentStatus     PaymentStatus     `json:"payment_status"`
+	FulfillmentStatus FulfillmentStatus `json:"fulfillment_status"`
+	TotalPrice        float64           `json:"total_price"`
+	DeliveryAddress   json.RawMessage   `json:"delivery_address"`
+	CreatedAt         time.Time         `json:"created_at"`
+	UpdatedAt         time.Time         `json:"updated_at"`
+	AddressId         int               `json:"address_id"`
+	OrderType         OrderType         `json:"order_type"`
 }
 
 type CreateOrderRequest struct {
@@ -41,9 +49,10 @@ type CreateOrderRequest struct {
 }
 
 type UpdateOrderRequest struct {
-	Status          OrderStatus     `json:"status"`
-	TotalPrice      float64         `json:"total_price"`
-	DeliveryAddress json.RawMessage `json:"delivery_address"`
-	AddressId       int             `json:"address_id"`
-	OrderType       OrderType       `json:"order_type"`
+	PaymentStatus     PaymentStatus     `json:"payment_status"`
+	FulfillmentStatus FulfillmentStatus `json:"Fulfillment_status"`
+	TotalPrice        float64           `json:"total_price"`
+	DeliveryAddress   json.RawMessage   `json:"delivery_address"`
+	AddressId         int               `json:"address_id"`
+	OrderType         OrderType         `json:"order_type"`
 }
