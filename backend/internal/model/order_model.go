@@ -8,16 +8,18 @@ import (
 type PaymentStatus string
 
 const (
-	PaymentStatusReceived PaymentStatus = "RECEIVED"
+	PaymentStatusSuccess  PaymentStatus = "SUCCESS"
 	PaymentStatusPending  PaymentStatus = "PENDING"
+	PaymentStatusError    PaymentStatus = "ERROR"
+	PaymentStatusCanceled PaymentStatus = "CANCELED"
 )
 
 type FulfillmentStatus string
 
 const (
-	FulfillmentStatusComplete      FulfillmentStatus = "COMPLETE"
-	FulfillmentStatusInProgress    FulfillmentStatus = "INPROGRESS"
-	FulfillmentStatusNotYetStarted FulfillmentStatus = "NOTYETSTARTED"
+	FulfillmentStatusComplete   FulfillmentStatus = "COMPLETE"
+	FulfillmentStatusInProgress FulfillmentStatus = "IN_PROGRESS"
+	FulfillmentStatusPending    FulfillmentStatus = "PENDING"
 )
 
 type OrderType string

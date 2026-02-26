@@ -182,12 +182,12 @@ func (os OrderService) UpdateOrderById(ctx context.Context, request model.Update
 }
 
 func validatePaymentStatus(status model.PaymentStatus) bool {
-	return status == model.PaymentStatus("RECEIVED") || status == model.PaymentStatus("PENDING")
+	return status == model.PaymentStatus("SUCCESS") || status == model.PaymentStatus("PENDING") || status == model.PaymentStatus("ERROR") || status == model.PaymentStatus("CANCELED")
 
 }
 
 func validateFulfillmentStatus(status model.FulfillmentStatus) bool {
-	return status == model.FulfillmentStatus("COMPLETE") || status == model.FulfillmentStatus("INPROGRESS") || status == model.FulfillmentStatus("NOTYETSTARTED")
+	return status == model.FulfillmentStatus("COMPLETE") || status == model.FulfillmentStatus("IN_PROGRESS") || status == model.FulfillmentStatus("NOTYETSTARTED")
 }
 
 func validateType(orderType model.OrderType) bool {
