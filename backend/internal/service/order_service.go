@@ -29,25 +29,27 @@ func (os OrderService) CreateOrder(ctx context.Context, request model.CreateOrde
 	var orderDomainModel model.Order
 	if request.AddressId == 0 {
 		orderDomainModel = model.Order{
-			CustomerId:      request.CustomerId,
-			Status:          "PENDING",
-			TotalPrice:      request.TotalPrice,
-			DeliveryAddress: request.DeliveryAddress,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
-			OrderType:       request.OrderType,
-			AddressId:       -1,
+			CustomerId:        request.CustomerId,
+			PaymentStatus:     "PENDING",
+			FulfillmentStatus: "FulfillmentStatusNotYetStarted",
+			TotalPrice:        request.TotalPrice,
+			DeliveryAddress:   request.DeliveryAddress,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+			OrderType:         request.OrderType,
+			AddressId:         -1,
 		}
 	} else {
 		orderDomainModel = model.Order{
-			CustomerId:      request.CustomerId,
-			Status:          "PENDING",
-			TotalPrice:      request.TotalPrice,
-			DeliveryAddress: request.DeliveryAddress,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
-			OrderType:       request.OrderType,
-			AddressId:       request.AddressId,
+			CustomerId:        request.CustomerId,
+			PaymentStatus:     "PENDING",
+			FulfillmentStatus: "FulfillmentStatusNotYetStarted",
+			TotalPrice:        request.TotalPrice,
+			DeliveryAddress:   request.DeliveryAddress,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+			OrderType:         request.OrderType,
+			AddressId:         request.AddressId,
 		}
 	}
 
@@ -76,7 +78,8 @@ func (os OrderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 		if err := orderRows.Scan(
 			&order.Id,
 			&order.CustomerId,
-			&order.Status,
+			&order.PaymentStatus,
+			&order.FulfillmentStatus,
 			&order.TotalPrice,
 			&order.DeliveryAddress,
 			&order.CreatedAt,
@@ -111,7 +114,8 @@ func (os OrderService) FetchOrderById(ctx context.Context, id int) (model.Order,
 	if err := orderRow.Scan(
 		&order.Id,
 		&order.CustomerId,
-		&order.Status,
+		&order.PaymentStatus,
+		&order.FulfillmentStatus,
 		&order.TotalPrice,
 		&order.DeliveryAddress,
 		&order.CreatedAt,
@@ -132,12 +136,20 @@ func (os OrderService) UpdateOrderById(ctx context.Context, request model.Update
 
 	updates := make(map[string]any)
 
-	if request.Status != "" {
-		if !validateStatus(request.Status) {
+	if request.PaymentStatus != "" {
+		if !validatePaymentStatus(request.PaymentStatus) {
 			zLog.Error("invalid status", zap.Int("order_id", id))
-			return fmt.Errorf("invalid status: %s", request.Status)
+			return fmt.Errorf("invalid status: %s", request.PaymentStatus)
 		}
-		updates["status"] = request.Status
+		updates["payment_status"] = request.PaymentStatus
+	}
+	if request.FulfillmentStatus != "" {
+		if !validateFulfillmentStatus(request.FulfillmentStatus) {
+			zLog.Error("invalid status", zap.Int("order_id", id))
+			return fmt.Errorf("invalid status: %s", request.FulfillmentStatus)
+		}
+		updates["Fulfillment_status"] = request.FulfillmentStatus
+
 	}
 	if request.TotalPrice != 0 {
 		updates["total_price"] = request.TotalPrice
@@ -169,8 +181,13 @@ func (os OrderService) UpdateOrderById(ctx context.Context, request model.Update
 	return nil
 }
 
-func validateStatus(status model.OrderStatus) bool {
-	return status == model.OrderStatus("PENDING") || status == model.OrderStatus("DELIVERED") || status == model.OrderStatus("CANCELLED")
+func validatePaymentStatus(status model.PaymentStatus) bool {
+	return status == model.PaymentStatus("SUCCESS") || status == model.PaymentStatus("PENDING") || status == model.PaymentStatus("ERROR") || status == model.PaymentStatus("CANCELED")
+
+}
+
+func validateFulfillmentStatus(status model.FulfillmentStatus) bool {
+	return status == model.FulfillmentStatus("COMPLETE") || status == model.FulfillmentStatus("IN_PROGRESS") || status == model.FulfillmentStatus("PENDING") || status == model.FulfillmentStatus("CANCELED")
 }
 
 func validateType(orderType model.OrderType) bool {

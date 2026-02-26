@@ -26,15 +26,16 @@ func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain m
 	zLog.Debug("Entered PersistCreateOrder")
 
 	query := `
-		INSERT INTO orders (customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, orderType)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO orders (customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, orderType)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
 	_, err := op.DbHandle.ExecContext(
 		ctx,
 		query,
 		orderDomain.CustomerId,
-		orderDomain.Status,
+		orderDomain.PaymentStatus,
+		orderDomain.FulfillmentStatus,
 		orderDomain.TotalPrice,
 		orderDomain.DeliveryAddress,
 		orderDomain.CreatedAt,
@@ -55,7 +56,7 @@ func (op OrderPersistence) FetchAllOrders(ctx context.Context) (*sql.Rows, error
 	zLog.Debug("Entered FetchAllOrders")
 
 	query := `
-		SELECT id, customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, order_type
+		SELECT id, customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, order_type
 		FROM orders
 	`
 
@@ -72,7 +73,7 @@ func (op OrderPersistence) FetchOrderById(ctx context.Context, id int) *sql.Row 
 	zLog.Debug("Entered FetchOrderById")
 
 	query := `
-		SELECT id, customer_id, status, total_price, delivery_address, created_at, updated_at, address_id, order_type
+		SELECT id, customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, order_type
 		FROM customers
 		WHERE id = $1
 	`
@@ -85,11 +86,12 @@ func (op OrderPersistence) PersistUpdateOrderById(ctx context.Context, id int, u
 	zLog.Debug("Entered PersistUpdateOrderById")
 
 	allowedFields := map[string]bool{
-		"status":           true,
-		"total_price":      true,
-		"delivery_address": true,
-		"address_id":       true,
-		"order_type":       true,
+		"payment_status":     true,
+		"fulfillment_status": true,
+		"total_price":        true,
+		"delivery_address":   true,
+		"address_id":         true,
+		"order_type":         true,
 	}
 
 	query := "UPDATE customers SET"
