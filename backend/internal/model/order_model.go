@@ -20,6 +20,7 @@ const (
 	FulfillmentStatusComplete   FulfillmentStatus = "COMPLETE"
 	FulfillmentStatusInProgress FulfillmentStatus = "IN_PROGRESS"
 	FulfillmentStatusPending    FulfillmentStatus = "PENDING"
+	FulfillmentStatusCanceled   FulfillmentStatus = "CANCELED"
 )
 
 type OrderType string

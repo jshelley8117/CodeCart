@@ -187,7 +187,7 @@ func validatePaymentStatus(status model.PaymentStatus) bool {
 }
 
 func validateFulfillmentStatus(status model.FulfillmentStatus) bool {
-	return status == model.FulfillmentStatus("COMPLETE") || status == model.FulfillmentStatus("IN_PROGRESS") || status == model.FulfillmentStatus("PENDING")
+	return status == model.FulfillmentStatus("COMPLETE") || status == model.FulfillmentStatus("IN_PROGRESS") || status == model.FulfillmentStatus("PENDING") || status == model.FulfillmentStatus("CANCELED")
 }
 
 func validateType(orderType model.OrderType) bool {
