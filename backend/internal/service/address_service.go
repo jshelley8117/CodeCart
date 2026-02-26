@@ -91,7 +91,7 @@ func (as AddressService) GetAddressById(ctx context.Context, id int) (model.Addr
 	zLog := utils.FromContext(ctx, zap.NewNop())
 	zLog.Debug("Entered GetAddressById")
 
-	addressRow := as.AddressPersistence.PersistGetAddressById(ctx, id)
+	addressRow := as.AddressPersistence.FetchAddressById(ctx, id)
 	if addressRow == nil {
 		zLog.Warn("order not found", zap.Int("order_id", id))
 		return model.Address{}, nil
