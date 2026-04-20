@@ -94,14 +94,16 @@ func (ap AddressPersistence) PersistUpdateAddressById(ctx context.Context, id in
 		"is_default":     true,
 	}
 
-	query := "UPDATE addresses SET "
+	query := `
+		UPDATE addresses SET
+	`
 	args := []any{}
 	argPosition := 1
 
 	for field, value := range updates {
 		if !allowedFields[field] {
-			z.Error("Attempted to update invalid field", zap.String("field", field))
-			return fmt.Errorf("invalid field: %s", field)
+			z.Error("Attempted to update invalid field", zap.String("invalid_field", field))
+			return fmt.Errorf("invalid field: %v", field)
 		}
 
 		if argPosition > 1 {
@@ -116,7 +118,7 @@ func (ap AddressPersistence) PersistUpdateAddressById(ctx context.Context, id in
 	args = append(args, time.Now())
 	argPosition++
 
-	query += "WHERE id = $" + fmt.Sprintf("%d", argPosition)
+	query += " WHERE id = $" + fmt.Sprintf("%d", argPosition)
 	args = append(args, id)
 
 	if _, err := ap.DbHandle.ExecContext(ctx, query, args...); err != nil {

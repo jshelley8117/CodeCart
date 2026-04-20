@@ -127,19 +127,19 @@ func (as AddressService) UpdateAddressById(ctx context.Context, request model.Up
 		updates["street_address"] = request.StreetAddress
 	}
 	if request.City != "" {
-		updates["street_address"] = request.City
+		updates["city"] = request.City
 	}
 	if request.State != "" {
-		updates["street_address"] = request.State
+		updates["state"] = request.State
 	}
 	if request.ZipCode != "" {
-		updates["street_address"] = request.ZipCode
+		updates["zip_code"] = request.ZipCode
 	}
 	if request.Country != "" {
-		updates["street_address"] = request.Country
+		updates["country"] = request.Country
 	}
 	if request.IsDefault != nil {
-		updates["street_address"] = request.IsDefault
+		updates["is_default"] = request.IsDefault
 	}
 
 	if len(updates) == 0 {
