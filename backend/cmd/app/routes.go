@@ -70,4 +70,15 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	mux.HandleFunc("DELETE /api/v1/products/{id}", productHandler.HandleDeleteProductById)
 	mux.HandleFunc("DELETE /api/v1/products/variants/{id}", productHandler.HandleDeleteProductVariantById)
 
+	// ---------- INVENTORY DOMAIN ----------
+	inventoryPersistence := persistence.NewInventoryPersistence((resourceConfig.GCloudDB))
+	inventoryService := service.NewInventoryService(inventoryPersistence)
+	inventoryHandler := handler.NewInventoryHandler(inventoryService)
+
+	mux.HandleFunc("POST /api/v1/inventory", inventoryHandler.HandleCreateInventory)
+	mux.HandleFunc("GET /api/v1/inventory", inventoryHandler.HandleGetAllInventory)
+	mux.HandleFunc("GET /api/v1/inventory/{id}", inventoryHandler.HandleGetInventoryById)
+	mux.HandleFunc("PATCH /api/v1/inventory/{id}", inventoryHandler.HandleUpdateInventoryById)
+	mux.HandleFunc("DELETE /api/v1/inventory/{id}", inventoryHandler.HandleDeleteInventoryById)
+
 }
