@@ -40,14 +40,18 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	mux.HandleFunc("DELETE /api/v1/addresses/{id}", addressHandler.HandleDeleteAddressById)
 
 	// ---------- CLOUD FUNCTION POC DOMAIN ----------
-	cloudFunctionClient := client.NewCloudFunctionClient(resourceConfig.TokenSource, os.Getenv("GCP_IMP_SA"))
+	cloudFunctionClient := client.NewCloudFunctionClient(os.Getenv("GCP_IMP_SA"))
 	cloudFunctionService := service.NewCloudFunctionService(
 		cloudFunctionClient,
-		os.Getenv("CLOUD_FUNCTION_HELLO_WORLD_URL"),
+		service.CloudFunctionConfig{
+			HelloWorldURL:  os.Getenv("CLOUD_FUNCTION_HELLO_WORLD_URL"),
+			HelloWorld2URL: os.Getenv("CLOUD_FUNCTION_HELLO_WORLD_URL_2"),
+		},
 	)
 	cloudFunctionHandler := handler.NewCloudFunctionHandler(cloudFunctionService)
 
 	mux.HandleFunc("GET /api/v1/hw", cloudFunctionHandler.HandleGetHelloWorld)
+	mux.HandleFunc("GET /api/v1/hw2", cloudFunctionHandler.HandleGetHelloWorld2)
 
 	// ---------- ORDERS DOMAIN ----------
 	orderPersistence := persistence.NewOrderPersistence(resourceConfig.GCloudDB)
