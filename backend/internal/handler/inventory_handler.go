@@ -31,19 +31,19 @@ func (ih InventoryHandler) HandleCreateInventory(w http.ResponseWriter, r *http.
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Warn(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
+		zLog.Error(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		zLog.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		zLog.Error(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := validate.Struct(request); err != nil {
-		zLog.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
+		zLog.Error(common.ERR_VALIDATION_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
@@ -117,7 +117,7 @@ func (ih InventoryHandler) HandleGetInventoryById(w http.ResponseWriter, r *http
 
 	item, err := ih.InventoryService.GetInventoryById(r.Context(), id)
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		zLog.Error("service invocation failed", zap.Int("id", id), zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_RETRIEVAL_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -156,7 +156,7 @@ func (ih InventoryHandler) HandleUpdateInventoryById(w http.ResponseWriter, r *h
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Error(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
+		zLog.Error(common.ERR_REQ_BODY_READ_FAIL, zap.Int("id", id), zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
@@ -168,7 +168,7 @@ func (ih InventoryHandler) HandleUpdateInventoryById(w http.ResponseWriter, r *h
 	}
 
 	if err := ih.InventoryService.UpdateInventoryById(r.Context(), id, request); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		zLog.Error("service invocation failed", zap.Int("id", id), zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -195,7 +195,7 @@ func (ih InventoryHandler) HandleDeleteInventoryById(w http.ResponseWriter, r *h
 	}
 
 	if err := ih.InventoryService.DeleteInventoryById(r.Context(), id); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		zLog.Error("service invocation failed", zap.Int("id", id), zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_DELETE_FAIL, http.StatusInternalServerError)
 		return
 	}

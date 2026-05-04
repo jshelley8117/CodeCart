@@ -18,6 +18,6 @@ type CreateInventoryRequest struct {
 }
 
 type UpdateInventoryRequest struct {
-	Quantity   int `json:"quantity"`
-	LocationId int `json:"location_id"`
+	Quantity   *int `json:"quantity"`
+	LocationId *int `json:"location_id"`
 }

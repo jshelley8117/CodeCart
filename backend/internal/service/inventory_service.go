@@ -105,11 +105,11 @@ func (is InventoryService) UpdateInventoryById(ctx context.Context, id int, requ
 
 	updates := make(map[string]any)
 
-	if request.Quantity != 0 {
-		updates["quantity"] = request.Quantity
+	if request.Quantity != nil {
+		updates["quantity"] = *request.Quantity
 	}
-	if request.LocationId != 0 {
-		updates["location_id"] = request.LocationId
+	if request.LocationId != nil {
+		updates["location_id"] = *request.LocationId
 	}
 
 	if len(updates) == 0 {
