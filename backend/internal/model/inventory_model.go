@@ -16,3 +16,8 @@ type CreateInventoryRequest struct {
 	LocationId       int `json:"location_id" validate:"required"`
 	Quantity         int `json:"quantity" validate:"required"`
 }
+
+type UpdateInventoryRequest struct {
+	Quantity   int `json:"quantity"`
+	LocationId int `json:"location_id"`
+}

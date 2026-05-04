@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-
-	// "strconv"
+	"strconv"
 
 	"github.com/jshelley8117/CodeCart/internal/common"
 	"github.com/jshelley8117/CodeCart/internal/model"
@@ -32,44 +31,64 @@ func (ih InventoryHandler) HandleCreateInventory(w http.ResponseWriter, r *http.
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, common.ERR_REQ_BODY_READ_FAIL, http.StatusBadRequest)
+		zLog.Warn(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		http.Error(w, common.ERR_REQ_UNMARSH_FAIL, http.StatusBadRequest)
+		zLog.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := validate.Struct(request); err != nil {
-		http.Error(w, common.ERR_VALIDATION_FAIL, http.StatusBadRequest)
+		zLog.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := ih.InventoryService.CreateInventory(r.Context(), request); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		zLog.Error("service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-
 }
 
 func (ih InventoryHandler) HandleGetAllInventory(w http.ResponseWriter, r *http.Request) {
 	zLog := utils.FromContext(r.Context(), zap.NewNop())
 	zLog.Debug("Entered HandleGetAllInventory")
 
-	inventory, err := ih.InventoryService.GetAllInventory(r.Context())
+	page, pageSize, err := utils.ParsePaginationInput(r.Context(), r)
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		zLog.Error("failed to parse pagination input", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
-	inventoryApiResponse, err := json.Marshal(inventory)
+	inventory, total, err := ih.InventoryService.GetAllInventory(r.Context(), page, pageSize)
+	if err != nil {
+		zLog.Error("service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_DB_RETRIEVAL_FAIL, http.StatusInternalServerError)
+		return
+	}
+
+	totalPages := utils.CalculateTotalPages(int(total), pageSize)
+
+	response := common.PaginatedResponse{
+		Data:       inventory,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalItems: total,
+		TotalPages: totalPages,
+	}
+
+	inventoryApiResponse, err := json.Marshal(response)
 	if err != nil {
 		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
-		http.Error(w, common.ERR_CLIENT_DB_RETRIEVAL_FAIL, http.StatusInternalServerError)
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
@@ -78,29 +97,108 @@ func (ih InventoryHandler) HandleGetAllInventory(w http.ResponseWriter, r *http.
 	w.Write(inventoryApiResponse)
 }
 
-// func (ih InventoryHandler) HandleGetInventoryById(w http.ResponseWriter, r *http.Request) {
-// 	zLog := utils.FromContext(r.Context(), zap.NewNop())
-// 	zLog.Debug("Entered HandleGetInventoryById")
+func (ih InventoryHandler) HandleGetInventoryById(w http.ResponseWriter, r *http.Request) {
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
+	zLog.Debug("Entered HandleGetInventoryById")
 
-// 	idPathVal := r.PathValue("id")
-// 	if idPathVal == "" {
-// 		zLog.Error("ID field in endpoint path parameter is missing")
-// 		http.Error(w, "ID is empty", http.StatusBadRequest)
-// 		return
-// 	}
+	idPathVal := r.PathValue("id")
+	if idPathVal == "" {
+		zLog.Error("ID field in endpoint path parameter is missing")
+		http.Error(w, "ID is empty", http.StatusBadRequest)
+		return
+	}
 
-// 	id, err := strconv.Atoi(idPathVal)
-// 	if err != nil {
-// 		zLog.Error("failed to convert id value from string to integer")
-// 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
-// 		return
-// 	}
+	id, err := strconv.Atoi(idPathVal)
+	if err != nil {
+		zLog.Error("failed to convert id value from string to integer")
+		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
+		return
+	}
 
-// 	var request model.Inventory
+	item, err := ih.InventoryService.GetInventoryById(r.Context(), id)
+	if err != nil {
+		zLog.Error("service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_DB_RETRIEVAL_FAIL, http.StatusInternalServerError)
+		return
+	}
 
-// 	body, err := ih.InventoryService.GetAllInventory(r.Context(), id)
-// }
+	inventoryApiResponse, err := json.Marshal(item)
+	if err != nil {
+		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
+		return
+	}
 
-func (ih InventoryHandler) HandleUpdateInventoryById(w http.ResponseWriter, r *http.Request)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(inventoryApiResponse)
+}
 
-func (ih InventoryHandler) HandleDeleteInventoryById(w http.ResponseWriter, r *http.Request)
+func (ih InventoryHandler) HandleUpdateInventoryById(w http.ResponseWriter, r *http.Request) {
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
+	zLog.Debug("Entered HandleUpdateInventoryById")
+
+	idPathVal := r.PathValue("id")
+	if idPathVal == "" {
+		zLog.Error("ID field in endpoint path parameter is missing")
+		http.Error(w, "ID is empty", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idPathVal)
+	if err != nil {
+		zLog.Error("failed to convert id value from string to integer")
+		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
+		return
+	}
+
+	var request model.UpdateInventoryRequest
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		zLog.Error(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.Unmarshal(body, &request); err != nil {
+		zLog.Error(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
+		return
+	}
+
+	if err := ih.InventoryService.UpdateInventoryById(r.Context(), id, request); err != nil {
+		zLog.Error("service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (ih InventoryHandler) HandleDeleteInventoryById(w http.ResponseWriter, r *http.Request) {
+	zLog := utils.FromContext(r.Context(), zap.NewNop())
+	zLog.Debug("Entered HandleDeleteInventoryById")
+
+	idPathVal := r.PathValue("id")
+	if idPathVal == "" {
+		zLog.Error("ID field in endpoint path parameter is missing")
+		http.Error(w, "ID is empty", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idPathVal)
+	if err != nil {
+		zLog.Error("failed to convert id value from string to integer")
+		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
+		return
+	}
+
+	if err := ih.InventoryService.DeleteInventoryById(r.Context(), id); err != nil {
+		zLog.Error("service invocation failed", zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_DB_DELETE_FAIL, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
