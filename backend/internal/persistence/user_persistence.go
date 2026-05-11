@@ -20,11 +20,11 @@ func NewUserPersistence(dbHandle *sql.DB) UserPersistence {
 }
 
 func (up UserPersistence) PersistCreateUser(ctx context.Context, userDomain model.User) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistCreateUser")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistCreateUser")
 	query := `
-		INSERT INTO users (email, created_at, updated_at, is_active, customer_id, gc_auth_id)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO users (email, created_at, updated_at, is_active, customer_id, auth_id, role)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 	_, err := up.DbHandle.ExecContext(
 		ctx,
@@ -34,10 +34,11 @@ func (up UserPersistence) PersistCreateUser(ctx context.Context, userDomain mode
 		userDomain.UpdatedAt,
 		userDomain.IsActive,
 		userDomain.CustomerId,
-		userDomain.GCAuthId,
+		userDomain.AuthId,
+		userDomain.Role,
 	)
 	if err != nil {
-		zLog.Error("ExecContext failed: %w", zap.Error(err))
+		z.Error("ExecContext failed: %w", zap.Error(err))
 		return err
 	}
 

@@ -22,8 +22,8 @@ func NewOrderPersistence(dbHandle *sql.DB) OrderPersistence {
 }
 
 func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain model.Order) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistCreateOrder")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistCreateOrder")
 
 	query := `
 		INSERT INTO orders (customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, orderType)
@@ -44,7 +44,7 @@ func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain m
 		orderDomain.OrderType,
 	)
 	if err != nil {
-		zLog.Error("ExecContext failed", zap.Error(err))
+		z.Error("ExecContext failed", zap.Error(err))
 		return err
 	}
 
@@ -52,8 +52,8 @@ func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain m
 }
 
 func (op OrderPersistence) FetchAllOrders(ctx context.Context) (*sql.Rows, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered FetchAllOrders")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered FetchAllOrders")
 
 	query := `
 		SELECT id, customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, order_type
@@ -62,15 +62,15 @@ func (op OrderPersistence) FetchAllOrders(ctx context.Context) (*sql.Rows, error
 
 	rows, err := op.DbHandle.QueryContext(ctx, query)
 	if err != nil {
-		zLog.Error("QueryContext failed for FetchAllOrders", zap.Error(err))
+		z.Error("QueryContext failed for FetchAllOrders", zap.Error(err))
 		return nil, err
 	}
 	return rows, nil
 }
 
 func (op OrderPersistence) FetchOrderById(ctx context.Context, id int) *sql.Row {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered FetchOrderById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered FetchOrderById")
 
 	query := `
 		SELECT id, customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, order_type
@@ -82,8 +82,8 @@ func (op OrderPersistence) FetchOrderById(ctx context.Context, id int) *sql.Row 
 }
 
 func (op OrderPersistence) PersistUpdateOrderById(ctx context.Context, id int, updates map[string]any) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistUpdateOrderById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistUpdateOrderById")
 
 	allowedFields := map[string]bool{
 		"payment_status":     true,
@@ -100,7 +100,7 @@ func (op OrderPersistence) PersistUpdateOrderById(ctx context.Context, id int, u
 
 	for field, value := range updates {
 		if !allowedFields[field] {
-			zLog.Error("Attempted to update invalid field", zap.String("field", field))
+			z.Error("Attempted to update invalid field", zap.String("field", field))
 			return fmt.Errorf("invalid field: %s", field)
 		}
 
@@ -121,7 +121,7 @@ func (op OrderPersistence) PersistUpdateOrderById(ctx context.Context, id int, u
 
 	_, err := op.DbHandle.ExecContext(ctx, query, args...)
 	if err != nil {
-		zLog.Error("ExecContext failed for PersistUpdateOrderById", zap.Error(err))
+		z.Error("ExecContext failed for PersistUpdateOrderById", zap.Error(err))
 		return err
 	}
 	return nil

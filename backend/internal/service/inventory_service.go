@@ -22,8 +22,8 @@ func NewInventoryService(inventoryPersistence persistence.InventoryPersistence) 
 }
 
 func (is InventoryService) CreateInventory(ctx context.Context, request model.CreateInventoryRequest) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered CreateInventory")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered CreateInventory")
 
 	inventoryDomainModel := model.Inventory{
 		ProductVariantId: request.ProductVariantId,
@@ -34,19 +34,19 @@ func (is InventoryService) CreateInventory(ctx context.Context, request model.Cr
 	}
 
 	if err := is.InventoryPersistence.PersistCreateInventory(ctx, inventoryDomainModel); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 	return nil
 }
 
 func (is InventoryService) GetAllInventory(ctx context.Context, page, pageSize int) ([]model.Inventory, int64, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered GetAllInventory")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered GetAllInventory")
 
 	inventoryRows, total, err := is.InventoryPersistence.FetchAllInventory(ctx, page, pageSize)
 	if err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return nil, 0, err
 	}
 	defer inventoryRows.Close()
@@ -63,14 +63,14 @@ func (is InventoryService) GetAllInventory(ctx context.Context, page, pageSize i
 			&item.CreatedAt,
 			&item.UpdatedAt,
 		); err != nil {
-			zLog.Error("scan operation failed", zap.Error(err))
+			z.Error("scan operation failed", zap.Error(err))
 			return nil, 0, err
 		}
 		inventory = append(inventory, item)
 	}
 
 	if err := inventoryRows.Err(); err != nil {
-		zLog.Error("error occurred while iterating through sql rows", zap.Error(err))
+		z.Error("error occurred while iterating through sql rows", zap.Error(err))
 		return nil, 0, err
 	}
 
@@ -78,8 +78,8 @@ func (is InventoryService) GetAllInventory(ctx context.Context, page, pageSize i
 }
 
 func (is InventoryService) GetInventoryById(ctx context.Context, id int) (model.Inventory, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered GetInventoryById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered GetInventoryById")
 
 	row := is.InventoryPersistence.FetchInventoryById(ctx, id)
 
@@ -92,7 +92,7 @@ func (is InventoryService) GetInventoryById(ctx context.Context, id int) (model.
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	); err != nil {
-		zLog.Error("scan operation failed", zap.Error(err))
+		z.Error("scan operation failed", zap.Error(err))
 		return model.Inventory{}, err
 	}
 
@@ -100,8 +100,8 @@ func (is InventoryService) GetInventoryById(ctx context.Context, id int) (model.
 }
 
 func (is InventoryService) UpdateInventoryById(ctx context.Context, id int, request model.UpdateInventoryRequest) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered UpdateInventoryById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered UpdateInventoryById")
 
 	updates := make(map[string]any)
 
@@ -113,12 +113,12 @@ func (is InventoryService) UpdateInventoryById(ctx context.Context, id int, requ
 	}
 
 	if len(updates) == 0 {
-		zLog.Error("no updates found", zap.Int("inventory_id", id))
+		z.Error("no updates found", zap.Int("inventory_id", id))
 		return fmt.Errorf("no updates found")
 	}
 
 	if err := is.InventoryPersistence.PersistUpdateInventoryById(ctx, id, updates); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 
@@ -126,11 +126,11 @@ func (is InventoryService) UpdateInventoryById(ctx context.Context, id int, requ
 }
 
 func (is InventoryService) DeleteInventoryById(ctx context.Context, id int) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered DeleteInventoryById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered DeleteInventoryById")
 
 	if err := is.InventoryPersistence.PersistDeleteInventoryById(ctx, id); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 

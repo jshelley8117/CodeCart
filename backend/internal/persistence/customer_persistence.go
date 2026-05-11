@@ -22,8 +22,8 @@ func NewCustomerPersistence(dbHandle *sql.DB) CustomerPersistence {
 }
 
 func (cp CustomerPersistence) PersistCreateCustomer(ctx context.Context, customerDomain model.Customer) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered PersistCreateCustomer")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered PersistCreateCustomer")
 	query := `
 		INSERT INTO customers (first_name, last_name, phone_number, email, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -40,7 +40,7 @@ func (cp CustomerPersistence) PersistCreateCustomer(ctx context.Context, custome
 		customerDomain.UpdatedAt,
 	)
 	if err != nil {
-		zLog.Error("ExecContext failed for PersistCreateCustomer", zap.Error(err))
+		z.Error("ExecContext failed for PersistCreateCustomer", zap.Error(err))
 		return err
 	}
 
@@ -48,8 +48,8 @@ func (cp CustomerPersistence) PersistCreateCustomer(ctx context.Context, custome
 }
 
 func (cp CustomerPersistence) FetchAllCustomers(ctx context.Context) (*sql.Rows, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered FetchAllCustomersById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered FetchAllCustomersById")
 	query := `
 		SELECT id, first_name, last_name, phone_number, email, created_at, updated_at
 		FROM customers
@@ -57,30 +57,30 @@ func (cp CustomerPersistence) FetchAllCustomers(ctx context.Context) (*sql.Rows,
 
 	rows, err := cp.DbHandle.QueryContext(ctx, query)
 	if err != nil {
-		zLog.Error("QueryContext failed for FetchAllCustomers", zap.Error(err))
+		z.Error("QueryContext failed for FetchAllCustomers", zap.Error(err))
 		return nil, err
 	}
 	return rows, nil
 }
 
 func (cp CustomerPersistence) PersistDeleteCustomerById(ctx context.Context, id int) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered PersistDeleteCustomerById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered PersistDeleteCustomerById")
 	query := `
 		DELETE FROM customers
 		WHERE id = $1
 	`
 
 	if _, err := cp.DbHandle.ExecContext(ctx, query, id); err != nil {
-		zLog.Error("ExecContext failed for PersistDeleteCustomerById", zap.Error(err))
+		z.Error("ExecContext failed for PersistDeleteCustomerById", zap.Error(err))
 		return err
 	}
 	return nil
 }
 
 func (cp CustomerPersistence) PersistUpdateCustomerById(ctx context.Context, id int, updates map[string]any) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered PersistUpdateCustomerById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered PersistUpdateCustomerById")
 
 	allowedFields := map[string]bool{
 		"first_name":   true,
@@ -99,7 +99,7 @@ func (cp CustomerPersistence) PersistUpdateCustomerById(ctx context.Context, id 
 	// iteration 3: args[value1, value2, value3] -> "UPDATE customers SET key1 = $1, key2 = $2, key3 = $3"
 	for field, value := range updates {
 		if !allowedFields[field] {
-			zLog.Error("Attempted to update invalid field", zap.String("field", field))
+			z.Error("Attempted to update invalid field", zap.String("field", field))
 			return fmt.Errorf("invalid field: %s", field)
 		}
 
@@ -121,7 +121,7 @@ func (cp CustomerPersistence) PersistUpdateCustomerById(ctx context.Context, id 
 	// "args..." will inject the values into the placeholders in the query
 	_, err := cp.DbHandle.ExecContext(ctx, query, args...)
 	if err != nil {
-		zLog.Error("ExecContext failed for PersistUpdateCustomerById", zap.Error(err))
+		z.Error("ExecContext failed for PersistUpdateCustomerById", zap.Error(err))
 		return err
 	}
 	return nil

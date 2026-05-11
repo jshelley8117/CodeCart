@@ -24,32 +24,32 @@ func NewProductHandler(productService service.ProductService) ProductHandler {
 }
 
 func (ph ProductHandler) HandleCreateProduct(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleCreateProduct")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleCreateProduct")
 
 	var request model.CreateProductRequest
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Warn(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
+		z.Warn(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		zLog.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		z.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := validate.Struct(request); err != nil {
-		zLog.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
+		z.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := ph.ProductService.CreateProduct(r.Context(), request); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -58,19 +58,19 @@ func (ph ProductHandler) HandleCreateProduct(w http.ResponseWriter, r *http.Requ
 }
 
 func (ph ProductHandler) HandleGetAllProducts(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleGetAllProducts")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleGetAllProducts")
 
 	page, pageSize, err := utils.ParsePaginationInput(r.Context(), r)
 	if err != nil {
-		zLog.Error("failed to parse pagination input", zap.Error(err))
+		z.Error("failed to parse pagination input", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	products, total, err := ph.ProductService.FetchAllProducts(r.Context(), page, pageSize)
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -87,7 +87,7 @@ func (ph ProductHandler) HandleGetAllProducts(w http.ResponseWriter, r *http.Req
 
 	productsApiResponse, err := json.Marshal(response)
 	if err != nil {
-		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -98,33 +98,33 @@ func (ph ProductHandler) HandleGetAllProducts(w http.ResponseWriter, r *http.Req
 }
 
 func (ph ProductHandler) HandleGetProductById(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleGetProductById")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleGetProductById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	productId, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
 
 	product, err := ph.ProductService.ServiceFetchProductById(r.Context(), productId)
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
 	productApiResponse, err := json.Marshal(product)
 	if err != nil {
-		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -135,19 +135,19 @@ func (ph ProductHandler) HandleGetProductById(w http.ResponseWriter, r *http.Req
 }
 
 func (ph ProductHandler) HandleUpdateProductById(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleUpdateProductById")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleUpdateProductById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
@@ -156,19 +156,19 @@ func (ph ProductHandler) HandleUpdateProductById(w http.ResponseWriter, r *http.
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Error("request body read failed", zap.Error(err))
+		z.Error("request body read failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_BODY_READ_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		zLog.Error("go unmarshaling failed", zap.Error(err))
+		z.Error("go unmarshaling failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_UNMARSH_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := ph.ProductService.UpdateProductById(r.Context(), id, request); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -177,33 +177,33 @@ func (ph ProductHandler) HandleUpdateProductById(w http.ResponseWriter, r *http.
 }
 
 func (ph ProductHandler) HandleGetAllProductVariantsByProductId(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleGetAllProductVariantsByProductId")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleGetAllProductVariantsByProductId")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	productId, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
 
 	page, pageSize, err := utils.ParsePaginationInput(r.Context(), r)
 	if err != nil {
-		zLog.Error("failed to parse pagination input", zap.Error(err))
+		z.Error("failed to parse pagination input", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	variants, total, err := ph.ProductService.FetchAllProductVariantsByProductId(r.Context(), productId, page, pageSize)
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -220,7 +220,7 @@ func (ph ProductHandler) HandleGetAllProductVariantsByProductId(w http.ResponseW
 
 	variantsApiResponse, err := json.Marshal(response)
 	if err != nil {
-		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -231,19 +231,19 @@ func (ph ProductHandler) HandleGetAllProductVariantsByProductId(w http.ResponseW
 }
 
 func (ph ProductHandler) HandleUpdateProductVariantById(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleUpdateProductVariantById")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleUpdateProductVariantById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
@@ -252,19 +252,19 @@ func (ph ProductHandler) HandleUpdateProductVariantById(w http.ResponseWriter, r
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Error("request body read failed", zap.Error(err))
+		z.Error("request body read failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_BODY_READ_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		zLog.Error("go unmarshaling failed", zap.Error(err))
+		z.Error("go unmarshaling failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_UNMARSH_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := ph.ProductService.UpdateProductVariantById(r.Context(), id, request); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -273,26 +273,26 @@ func (ph ProductHandler) HandleUpdateProductVariantById(w http.ResponseWriter, r
 }
 
 func (ph ProductHandler) HandleDeleteProductById(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleDeleteProductById")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleDeleteProductById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
 
 	err = ph.ProductService.DeleteProductById(r.Context(), id)
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -302,26 +302,26 @@ func (ph ProductHandler) HandleDeleteProductById(w http.ResponseWriter, r *http.
 }
 
 func (ph ProductHandler) HandleDeleteProductVariantById(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleDeleteProductVariantById")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleDeleteProductVariantById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
 
 	err = ph.ProductService.DeleteProductVariantById(r.Context(), id)
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}

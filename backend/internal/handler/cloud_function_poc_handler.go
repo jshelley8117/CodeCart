@@ -20,19 +20,19 @@ func NewCloudFunctionHandler(cloudFunctionService service.CloudFunctionService) 
 }
 
 func (cfh CloudFunctionHandler) HandleGetHelloWorld(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleGetHelloWorld")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleGetHelloWorld")
 
 	response, err := cfh.CloudFunctionService.GetHelloWorld(r.Context())
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, "Failed to invoke cloud function", http.StatusInternalServerError)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
-		zLog.Error("go marshaling failed", zap.Error(err))
+		z.Error("go marshaling failed", zap.Error(err))
 		http.Error(w, "Failed to serialize response", http.StatusInternalServerError)
 		return
 	}
@@ -43,19 +43,19 @@ func (cfh CloudFunctionHandler) HandleGetHelloWorld(w http.ResponseWriter, r *ht
 }
 
 func (cfh CloudFunctionHandler) HandleGetHelloWorld2(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleGetHelloWorld2")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleGetHelloWorld2")
 
 	response, err := cfh.CloudFunctionService.GetHelloWorld2(r.Context())
 	if err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, "Failed to invoke cloud function", http.StatusInternalServerError)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
-		zLog.Error("go marshaling failed", zap.Error(err))
+		z.Error("go marshaling failed", zap.Error(err))
 		http.Error(w, "Failed to serialize response", http.StatusInternalServerError)
 		return
 	}

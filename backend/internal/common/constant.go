@@ -10,3 +10,8 @@ const (
 	ERR_CLIENT_DB_RETRIEVAL_FAIL   = "Failed to retrieve requested data"
 	ERR_CLIENT_DB_DELETE_FAIL      = "Failed to remove requested data"
 )
+
+type ContextKey string
+
+const ContextKeyFirebaseUID ContextKey = "firebase_uid"
+const ContextKeyRole ContextKey = "role"

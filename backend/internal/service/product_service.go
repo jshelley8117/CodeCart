@@ -23,8 +23,8 @@ func NewProductService(productPersistence persistence.ProductPersistence) Produc
 }
 
 func (ps ProductService) CreateProduct(ctx context.Context, request model.CreateProductRequest) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceCreateProduct")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered ServiceCreateProduct")
 
 	productDomainModel := model.Product{
 		Name:            request.Name,
@@ -40,7 +40,7 @@ func (ps ProductService) CreateProduct(ctx context.Context, request model.Create
 
 	err := ps.ProductPersistence.PersistCreateProduct(ctx, productDomainModel)
 	if err != nil {
-		zLog.Error("persistance invocation failed", zap.Error(err))
+		z.Error("persistance invocation failed", zap.Error(err))
 		return err
 	}
 
@@ -48,12 +48,12 @@ func (ps ProductService) CreateProduct(ctx context.Context, request model.Create
 }
 
 func (ps ProductService) FetchAllProducts(ctx context.Context, page, pageSize int) ([]model.Product, int64, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceFetchAllProducts")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered ServiceFetchAllProducts")
 
 	productRows, total, err := ps.ProductPersistence.FetchAllProducts(ctx, page, pageSize)
 	if err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return nil, 0, err
 	}
 	defer productRows.Close()
@@ -73,14 +73,14 @@ func (ps ProductService) FetchAllProducts(ctx context.Context, page, pageSize in
 			&product.CreatedAt,
 			&product.UpdatedAt,
 		); err != nil {
-			zLog.Error("scan operation failed", zap.Error(err))
+			z.Error("scan operation failed", zap.Error(err))
 			return nil, 0, err
 		}
 		products = append(products, product)
 	}
 
 	if err := productRows.Err(); err != nil {
-		zLog.Error("error occurred while iterating through sql rows", zap.Error(err))
+		z.Error("error occurred while iterating through sql rows", zap.Error(err))
 		return nil, 0, err
 	}
 
@@ -88,8 +88,8 @@ func (ps ProductService) FetchAllProducts(ctx context.Context, page, pageSize in
 }
 
 func (ps ProductService) ServiceFetchProductById(ctx context.Context, id int) (model.Product, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceFetchProductById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered ServiceFetchProductById")
 
 	var product model.Product
 	row := ps.ProductPersistence.FetchProductById(ctx, id)
@@ -105,7 +105,7 @@ func (ps ProductService) ServiceFetchProductById(ctx context.Context, id int) (m
 		&product.CreatedAt,
 		&product.UpdatedAt,
 	); err != nil {
-		zLog.Error("scan operation failed", zap.Error(err))
+		z.Error("scan operation failed", zap.Error(err))
 		return model.Product{}, err
 	}
 
@@ -113,8 +113,8 @@ func (ps ProductService) ServiceFetchProductById(ctx context.Context, id int) (m
 }
 
 func (ps ProductService) UpdateProductById(ctx context.Context, id int, request model.UpdateProductRequest) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceUpdateProductById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered ServiceUpdateProductById")
 
 	updates := make(map[string]any)
 
@@ -138,12 +138,12 @@ func (ps ProductService) UpdateProductById(ctx context.Context, id int, request 
 	}
 
 	if len(updates) == 0 {
-		zLog.Error("no updates found", zap.Int("product_id", id))
+		z.Error("no updates found", zap.Int("product_id", id))
 		return fmt.Errorf("no updates found")
 	}
 
 	if err := ps.ProductPersistence.PersistUpdateProductById(ctx, id, updates); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 
@@ -151,12 +151,12 @@ func (ps ProductService) UpdateProductById(ctx context.Context, id int, request 
 }
 
 func (ps ProductService) FetchAllProductVariantsByProductId(ctx context.Context, productId, page, pageSize int) ([]model.ProductVariant, int64, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered ServiceFetchAllProductVariantsByProductId")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered ServiceFetchAllProductVariantsByProductId")
 
 	variantRows, total, err := ps.ProductPersistence.FetchAllProductVariantsByProductId(ctx, productId, page, pageSize)
 	if err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return nil, 0, err
 	}
 	defer variantRows.Close()
@@ -177,7 +177,7 @@ func (ps ProductService) FetchAllProductVariantsByProductId(ctx context.Context,
 			&imagePath,
 			&variant.ProductId,
 		); err != nil {
-			zLog.Error("scan operation failed", zap.Error(err))
+			z.Error("scan operation failed", zap.Error(err))
 			return nil, 0, err
 		}
 		variant.Sku = sku.String
@@ -188,7 +188,7 @@ func (ps ProductService) FetchAllProductVariantsByProductId(ctx context.Context,
 	}
 
 	if err := variantRows.Err(); err != nil {
-		zLog.Error("error occurred while iterating through sql rows", zap.Error(err))
+		z.Error("error occurred while iterating through sql rows", zap.Error(err))
 		return nil, 0, err
 	}
 
@@ -196,8 +196,8 @@ func (ps ProductService) FetchAllProductVariantsByProductId(ctx context.Context,
 }
 
 func (ps ProductService) UpdateProductVariantById(ctx context.Context, id int, request model.UpdateProductVariant) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered UpdateProductVariantById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered UpdateProductVariantById")
 
 	updates := make(map[string]any)
 
@@ -215,12 +215,12 @@ func (ps ProductService) UpdateProductVariantById(ctx context.Context, id int, r
 	}
 
 	if len(updates) == 0 {
-		zLog.Error("no updates found", zap.Int("variant_id", id))
+		z.Error("no updates found", zap.Int("variant_id", id))
 		return fmt.Errorf("no updates found")
 	}
 
 	if err := ps.ProductPersistence.PersistUpdateProductVariantById(ctx, id, updates); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 
@@ -228,16 +228,16 @@ func (ps ProductService) UpdateProductVariantById(ctx context.Context, id int, r
 }
 
 func (ps ProductService) DeleteProductById(ctx context.Context, id int) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered DeleteProductById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered DeleteProductById")
 
 	if err := ps.ProductPersistence.PersistDeleteVariantsByProductId(ctx, id); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 
 	if err := ps.ProductPersistence.PersistDeleteProductById(ctx, id); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 
@@ -245,11 +245,11 @@ func (ps ProductService) DeleteProductById(ctx context.Context, id int) error {
 }
 
 func (ps ProductService) DeleteProductVariantById(ctx context.Context, id int) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("entered DeleteProductVariantById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered DeleteProductVariantById")
 
 	if err := ps.ProductPersistence.PersistDeleteProductVariantById(ctx, id); err != nil {
-		zLog.Error("persistence invocation failed", zap.Error(err))
+		z.Error("persistence invocation failed", zap.Error(err))
 		return err
 	}
 

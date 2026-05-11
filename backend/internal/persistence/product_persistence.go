@@ -22,8 +22,8 @@ func NewProductPersistence(dbHandle *sql.DB) ProductPersistence {
 }
 
 func (pp ProductPersistence) PersistCreateProduct(ctx context.Context, productDomain model.Product) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistCreateProduct")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistCreateProduct")
 
 	query := `
 		INSERT INTO products (name, description, unit_price, category, brand, age_restricted, created_at, updated_at)
@@ -43,20 +43,20 @@ func (pp ProductPersistence) PersistCreateProduct(ctx context.Context, productDo
 		productDomain.UpdatedAt,
 	)
 	if err != nil {
-		zLog.Error("ExecContext failed", zap.Error(err))
+		z.Error("ExecContext failed", zap.Error(err))
 		return err
 	}
 	return nil
 }
 
 func (pp ProductPersistence) FetchAllProducts(ctx context.Context, page, pageSize int) (*sql.Rows, int64, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistenceFetchAllProducts")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistenceFetchAllProducts")
 
 	var total int64
 	countQuery := "SELECT COUNT(*) FROM products"
 	if err := pp.DbHandle.QueryRowContext(ctx, countQuery).Scan(&total); err != nil {
-		zLog.Error("QueryRowContext failed on the pagination count query", zap.Error(err))
+		z.Error("QueryRowContext failed on the pagination count query", zap.Error(err))
 		return nil, 0, err
 	}
 
@@ -71,15 +71,15 @@ func (pp ProductPersistence) FetchAllProducts(ctx context.Context, page, pageSiz
 
 	rows, err := pp.DbHandle.QueryContext(ctx, query, pageSize, offset)
 	if err != nil {
-		zLog.Error("QueryContext failed", zap.Error(err))
+		z.Error("QueryContext failed", zap.Error(err))
 		return nil, 0, err
 	}
 	return rows, total, nil
 }
 
 func (pp ProductPersistence) FetchProductById(ctx context.Context, id int) *sql.Row {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered FetchProductById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered FetchProductById")
 
 	query := `
 		SELECT id, name, description, unit_price, category, brand, age_restricted, created_at, updated_at
@@ -91,13 +91,13 @@ func (pp ProductPersistence) FetchProductById(ctx context.Context, id int) *sql.
 }
 
 func (pp ProductPersistence) FetchAllProductVariantsByProductId(ctx context.Context, productId, page, pageSize int) (*sql.Rows, int64, error) {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered FetchAllProductVariantsByProductId")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered FetchAllProductVariantsByProductId")
 
 	var total int64
 	countQuery := "SELECT COUNT(*) FROM product_variants WHERE product_id = $1"
 	if err := pp.DbHandle.QueryRowContext(ctx, countQuery, productId).Scan(&total); err != nil {
-		zLog.Error("QueryRowContext failed on the pagination count query", zap.Error(err))
+		z.Error("QueryRowContext failed on the pagination count query", zap.Error(err))
 		return nil, 0, err
 	}
 
@@ -113,15 +113,15 @@ func (pp ProductPersistence) FetchAllProductVariantsByProductId(ctx context.Cont
 
 	rows, err := pp.DbHandle.QueryContext(ctx, query, productId, pageSize, offset)
 	if err != nil {
-		zLog.Error("QueryContext failed", zap.Error(err))
+		z.Error("QueryContext failed", zap.Error(err))
 		return nil, 0, err
 	}
 	return rows, total, nil
 }
 
 func (pp ProductPersistence) PersistUpdateProductById(ctx context.Context, productId int, updates map[string]any) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistUpdateProductById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistUpdateProductById")
 
 	allowedFields := map[string]bool{
 		"name":           true,
@@ -140,7 +140,7 @@ func (pp ProductPersistence) PersistUpdateProductById(ctx context.Context, produ
 
 	for field, value := range updates {
 		if !allowedFields[field] {
-			zLog.Error("Attempted to update invalid field", zap.String("invalid_field", field))
+			z.Error("Attempted to update invalid field", zap.String("invalid_field", field))
 			return fmt.Errorf("invalid field: %v", field)
 		}
 
@@ -161,15 +161,15 @@ func (pp ProductPersistence) PersistUpdateProductById(ctx context.Context, produ
 
 	_, err := pp.DbHandle.ExecContext(ctx, query, args...)
 	if err != nil {
-		zLog.Error("ExecContext failed for PersistUpdateProductById", zap.Error(err))
+		z.Error("ExecContext failed for PersistUpdateProductById", zap.Error(err))
 		return err
 	}
 	return nil
 }
 
 func (pp ProductPersistence) PersistUpdateProductVariantById(ctx context.Context, variantId int, updates map[string]any) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistUpdateProductVariantById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistUpdateProductVariantById")
 
 	allowedFields := map[string]bool{
 		"size":       true,
@@ -186,7 +186,7 @@ func (pp ProductPersistence) PersistUpdateProductVariantById(ctx context.Context
 
 	for field, value := range updates {
 		if !allowedFields[field] {
-			zLog.Error("Attempted to update invalid field", zap.String("invalid_field", field))
+			z.Error("Attempted to update invalid field", zap.String("invalid_field", field))
 			return fmt.Errorf("invalid field: %s", field)
 		}
 
@@ -207,15 +207,15 @@ func (pp ProductPersistence) PersistUpdateProductVariantById(ctx context.Context
 
 	_, err := pp.DbHandle.ExecContext(ctx, query, args...)
 	if err != nil {
-		zLog.Error("ExecContext failed for PersistUpdateProductVariantById", zap.Error(err))
+		z.Error("ExecContext failed for PersistUpdateProductVariantById", zap.Error(err))
 		return err
 	}
 	return nil
 }
 
 func (pp ProductPersistence) PersistDeleteProductById(ctx context.Context, productId int) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistDeleteProductById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistDeleteProductById")
 
 	query := `
 		DELETE FROM products
@@ -223,15 +223,15 @@ func (pp ProductPersistence) PersistDeleteProductById(ctx context.Context, produ
 	`
 
 	if _, err := pp.DbHandle.ExecContext(ctx, query, productId); err != nil {
-		zLog.Error("ExecContext failed for PersistDeleteProductById", zap.Error(err))
+		z.Error("ExecContext failed for PersistDeleteProductById", zap.Error(err))
 		return err
 	}
 	return nil
 }
 
 func (pp ProductPersistence) PersistDeleteVariantsByProductId(ctx context.Context, productId int) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistDeleteVariantsByProductId")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistDeleteVariantsByProductId")
 
 	query := `
 		DELETE FROM product_variants
@@ -239,15 +239,15 @@ func (pp ProductPersistence) PersistDeleteVariantsByProductId(ctx context.Contex
 	`
 
 	if _, err := pp.DbHandle.ExecContext(ctx, query, productId); err != nil {
-		zLog.Error("ExecContext failed for PersistDeleteVariantsByProductId", zap.Error(err))
+		z.Error("ExecContext failed for PersistDeleteVariantsByProductId", zap.Error(err))
 		return err
 	}
 	return nil
 }
 
 func (pp ProductPersistence) PersistDeleteProductVariantById(ctx context.Context, variantId int) error {
-	zLog := utils.FromContext(ctx, zap.NewNop())
-	zLog.Debug("Entered PersistDeleteProductVariantById")
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered PersistDeleteProductVariantById")
 
 	query := `
 		DELETE FROM product_variants
@@ -255,7 +255,7 @@ func (pp ProductPersistence) PersistDeleteProductVariantById(ctx context.Context
 	`
 
 	if _, err := pp.DbHandle.ExecContext(ctx, query, variantId); err != nil {
-		zLog.Error("ExecContext failed for PersistDeleteProductVariantById")
+		z.Error("ExecContext failed for PersistDeleteProductVariantById")
 		return err
 	}
 	return nil

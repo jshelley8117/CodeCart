@@ -24,32 +24,32 @@ func NewOrderHandler(orderService service.OrderService) OrderHandler {
 }
 
 func (oh OrderHandler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
+	z := utils.FromContext(r.Context(), zap.NewNop())
 
 	var request model.CreateOrderRequest
 
-	zLog.Debug("Entered HandleCreateOrder")
+	z.Debug("Entered HandleCreateOrder")
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Warn(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
+		z.Warn(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		zLog.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		z.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := validate.Struct(request); err != nil {
-		zLog.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
+		z.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 	if err := oh.OrderService.CreateOrder(r.Context(), request); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -59,19 +59,19 @@ func (oh OrderHandler) HandleCreateOrder(w http.ResponseWriter, r *http.Request)
 }
 
 func (oh OrderHandler) HandleGetAllOrders(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleGetAllOrders")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleGetAllOrders")
 
 	orders, err := oh.OrderService.GetAllOrders(r.Context())
 	if err != nil {
-		zLog.Error("Service invocation failed", zap.Error(err))
+		z.Error("Service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
 	ordersApiResponse, err := json.Marshal(orders)
 	if err != nil {
-		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -82,33 +82,33 @@ func (oh OrderHandler) HandleGetAllOrders(w http.ResponseWriter, r *http.Request
 }
 
 func (oh OrderHandler) HandleFetchOrderById(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandleFetchOrderById")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandleFetchOrderById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
 
 	orders, err := oh.OrderService.FetchOrderById(r.Context(), id)
 	if err != nil {
-		zLog.Error("Service invocation failed", zap.Error(err))
+		z.Error("Service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
 
 	ordersApiResponse, err := json.Marshal(orders)
 	if err != nil {
-		zLog.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_MARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusInternalServerError)
 		return
 	}
@@ -120,19 +120,19 @@ func (oh OrderHandler) HandleFetchOrderById(w http.ResponseWriter, r *http.Reque
 }
 
 func (oh OrderHandler) HandleUpdateOrderById(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
-	zLog.Debug("entered HandlePersistUpdateOrderById")
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("entered HandlePersistUpdateOrderById")
 
 	idPathVal := r.PathValue("id")
 	if idPathVal == "" {
-		zLog.Error("ID field in endpoint path parameter is missing")
+		z.Error("ID field in endpoint path parameter is missing")
 		http.Error(w, "ID is empty", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idPathVal)
 	if err != nil {
-		zLog.Error("failed to convert id value from string to integer")
+		z.Error("failed to convert id value from string to integer")
 		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
 		return
 	}
@@ -141,25 +141,25 @@ func (oh OrderHandler) HandleUpdateOrderById(w http.ResponseWriter, r *http.Requ
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Error("request body read failed", zap.Error(err))
+		z.Error("request body read failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_BODY_READ_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		zLog.Error("go unmarshaling failed", zap.Error(err))
+		z.Error("go unmarshaling failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_UNMARSH_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := validate.Struct(request); err != nil {
-		zLog.Error("struct validation failed", zap.Error(err))
+		z.Error("struct validation failed", zap.Error(err))
 		http.Error(w, common.ERR_VALIDATION_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := oh.OrderService.UpdateOrderById(r.Context(), request, id); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
 		return
 	}

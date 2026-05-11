@@ -10,18 +10,18 @@ import (
 )
 
 func ParsePaginationInput(ctx context.Context, r *http.Request) (int, int, error) {
-	zLog := FromContext(ctx, zap.NewNop())
+	z := FromContext(ctx, zap.NewNop())
 	page := 1
 	pageSize := 20
 
 	if pageParam := r.URL.Query().Get("page"); pageParam != "" {
 		parsed, err := strconv.Atoi(pageParam)
 		if err != nil {
-			zLog.Error("invalid page parameter", zap.Error(err))
+			z.Error("invalid page parameter", zap.Error(err))
 			return 0, 0, err
 		}
 		if parsed <= 0 {
-			zLog.Error("page must be greater than 0", zap.Error(err))
+			z.Error("page must be greater than 0", zap.Error(err))
 			return 0, 0, err
 		}
 		page = parsed
@@ -30,15 +30,15 @@ func ParsePaginationInput(ctx context.Context, r *http.Request) (int, int, error
 	if pageSizeParam := r.URL.Query().Get("page_size"); pageSizeParam != "" {
 		parsed, err := strconv.Atoi(pageSizeParam)
 		if err != nil {
-			zLog.Error("invalid page_size parameter", zap.Error(err))
+			z.Error("invalid page_size parameter", zap.Error(err))
 			return 0, 0, err
 		}
 		if parsed <= 0 {
-			zLog.Error("page_size must be greater than 0", zap.Error(err))
+			z.Error("page_size must be greater than 0", zap.Error(err))
 			return 0, 0, err
 		}
 		if parsed > 100 {
-			zLog.Error("page_size must not exceed 100", zap.Error(err))
+			z.Error("page_size must not exceed 100", zap.Error(err))
 			return 0, 0, err
 		}
 		pageSize = parsed

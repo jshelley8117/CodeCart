@@ -10,14 +10,16 @@ type User struct {
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 	IsActive   bool      `json:"is_active"`
-	CustomerId int       `json:"customer_id"`
-	GCAuthId   string    `json:"gc_auth_id"`
+	CustomerId *int      `json:"customer_id"`
+	AuthId     string    `json:"auth_id"`
+	Role       *string   `json:"role"`
 }
 
 type CreateUserRequest struct {
-	Email      string `json:"email" validate:"required,email"`
-	CustomerId int    `json:"customer_id" validate:"required"`
-	GCAuthId   string `json:"gc_auth_id" validate:"required"`
+	Email      string  `json:"email" validate:"required,email"`
+	CustomerId *int    `json:"customer_id"`
+	AuthId     string  `json:"auth_id" validate:"required"`
+	Role       *string `json:"role"`
 }
 
 type UserResponse struct {
@@ -26,4 +28,5 @@ type UserResponse struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 	IsActive  bool   `json:"is_active"`
+	Role      string `json:"role"`
 }

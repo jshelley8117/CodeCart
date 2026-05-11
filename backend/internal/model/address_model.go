@@ -18,7 +18,6 @@ type Address struct {
 }
 
 type CreateAddressRequest struct {
-	UserId        int    `json:"user_id" validate:"required"`
 	StreetAddress string `json:"street_address" validate:"required"`
 	City          string `json:"city" validate:"required"`
 	State         string `json:"state" validate:"required"`

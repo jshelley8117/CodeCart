@@ -6,14 +6,18 @@ import (
 
 	"github.com/jshelley8117/CodeCart/internal/client"
 	"github.com/jshelley8117/CodeCart/internal/handler"
+	"github.com/jshelley8117/CodeCart/internal/middleware"
 	"github.com/jshelley8117/CodeCart/internal/persistence"
 	"github.com/jshelley8117/CodeCart/internal/service"
 )
 
 func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
+	authMW := middleware.AuthMiddleware(resourceConfig.FirebaseAuth) // middleware wrapper to be used for JWT protected routes
+	adminMW := middleware.AdminOnly                                  // middleware wrapper to be used for admin-only routes
+
 	// ---------- USERS DOMAIN ----------
 	userPersistence := persistence.NewUserPersistence(resourceConfig.GCloudDB)
-	userService := service.NewUserService(userPersistence)
+	userService := service.NewUserService(userPersistence, resourceConfig.FirebaseAuth)
 	userHandler := handler.NewUserHandler(userService)
 
 	mux.HandleFunc("POST /api/v1/users", userHandler.HandleCreateUser)
@@ -23,21 +27,21 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	customerService := service.NewCustomerService(customerPersistence)
 	customerHandler := handler.NewCustomerHandler(customerService)
 
-	mux.HandleFunc("POST /api/v1/customers", customerHandler.HandleCreateCustomer)
-	mux.HandleFunc("GET /api/v1/customers", customerHandler.HandleGetAllCustomers)
-	mux.HandleFunc("DELETE /api/v1/customers/{id}", customerHandler.HandleDeleteCustomerById)
-	mux.HandleFunc("PATCH /api/v1/customers/{id}", customerHandler.HandleUpdateCustomerById)
+	mux.Handle("POST /api/v1/customers", authMW(adminMW(http.HandlerFunc(customerHandler.HandleCreateCustomer))))
+	mux.Handle("GET /api/v1/customers", authMW(adminMW(http.HandlerFunc(customerHandler.HandleGetAllCustomers))))
+	mux.Handle("DELETE /api/v1/customers/{id}", authMW(adminMW(http.HandlerFunc(customerHandler.HandleDeleteCustomerById))))
+	mux.Handle("PATCH /api/v1/customers/{id}", authMW(adminMW(http.HandlerFunc(customerHandler.HandleUpdateCustomerById))))
 
 	// ---------- ADDRESS DOMAIN ----------
 	addressPersistence := persistence.NewAddressPersistence(resourceConfig.GCloudDB)
 	addressService := service.NewAddressService(addressPersistence)
 	addressHandler := handler.NewAddressHandler(addressService)
 
-	mux.HandleFunc("POST /api/v1/addresses", addressHandler.HandleCreateAddress)
-	mux.HandleFunc("GET /api/v1/addresses", addressHandler.HandleGetAllAddresses)
-	mux.HandleFunc("GET /api/v1/addresses/{id}", addressHandler.HandleGetAddressById)
-	mux.HandleFunc("PATCH /api/v1/addresses/{id}", addressHandler.HandleUpdateAddressById)
-	mux.HandleFunc("DELETE /api/v1/addresses/{id}", addressHandler.HandleDeleteAddressById)
+	mux.Handle("POST /api/v1/addresses", authMW(http.HandlerFunc(addressHandler.HandleCreateAddress)))
+	mux.Handle("GET /api/v1/addresses", authMW(http.HandlerFunc(addressHandler.HandleGetAllAddressesById)))
+	mux.Handle("GET /api/v1/addresses/{id}", authMW(http.HandlerFunc(addressHandler.HandleGetAddressById)))
+	mux.Handle("PATCH /api/v1/addresses/{id}", authMW(http.HandlerFunc(addressHandler.HandleUpdateAddressById)))
+	mux.Handle("DELETE /api/v1/addresses/{id}", authMW(http.HandlerFunc(addressHandler.HandleDeleteAddressById)))
 
 	// ---------- CLOUD FUNCTION POC DOMAIN ----------
 	cloudFunctionClient := client.NewCloudFunctionClient(os.Getenv("GCP_IMP_SA"))
@@ -58,34 +62,34 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	orderService := service.NewOrderService(orderPersistence)
 	orderHandler := handler.NewOrderHandler(orderService)
 
-	mux.HandleFunc("POST /api/v1/orders", orderHandler.HandleCreateOrder)
-	mux.HandleFunc("GET /api/v1/orders", orderHandler.HandleGetAllOrders)
-	mux.HandleFunc("GET /api/v1/orders/{id}", orderHandler.HandleGetAllOrders)
-	mux.HandleFunc("PATCH /api/v1/orders/{id}", orderHandler.HandleUpdateOrderById)
+	mux.Handle("POST /api/v1/orders", authMW(http.HandlerFunc(orderHandler.HandleCreateOrder)))
+	mux.Handle("GET /api/v1/orders", authMW(http.HandlerFunc(orderHandler.HandleGetAllOrders)))
+	mux.Handle("GET /api/v1/orders/{id}", authMW(http.HandlerFunc(orderHandler.HandleGetAllOrders)))
+	mux.Handle("PATCH /api/v1/orders/{id}", authMW(http.HandlerFunc(orderHandler.HandleUpdateOrderById)))
 
 	// ---------- PRODUCTS DOMAIN ----------
 	productPersistence := persistence.NewProductPersistence(resourceConfig.GCloudDB)
 	productService := service.NewProductService(productPersistence)
 	productHandler := handler.NewProductHandler(productService)
 
-	mux.HandleFunc("POST /api/v1/products", productHandler.HandleCreateProduct)
+	mux.Handle("POST /api/v1/products", authMW(adminMW(http.HandlerFunc(productHandler.HandleCreateProduct))))
 	mux.HandleFunc("GET /api/v1/products", productHandler.HandleGetAllProducts)
 	mux.HandleFunc("GET /api/v1/products/{id}", productHandler.HandleGetProductById)
 	mux.HandleFunc("GET /api/v1/products/{id}/variants", productHandler.HandleGetAllProductVariantsByProductId)
-	mux.HandleFunc("PATCH /api/v1/products/{id}", productHandler.HandleUpdateProductById)
-	mux.HandleFunc("PATCH /api/v1/products/variants/{id}", productHandler.HandleUpdateProductVariantById)
-	mux.HandleFunc("DELETE /api/v1/products/{id}", productHandler.HandleDeleteProductById)
-	mux.HandleFunc("DELETE /api/v1/products/variants/{id}", productHandler.HandleDeleteProductVariantById)
+	mux.Handle("PATCH /api/v1/products/{id}", authMW(adminMW(http.HandlerFunc(productHandler.HandleUpdateProductById))))
+	mux.Handle("PATCH /api/v1/products/variants/{id}", authMW(adminMW(http.HandlerFunc(productHandler.HandleUpdateProductVariantById))))
+	mux.Handle("DELETE /api/v1/products/{id}", authMW(adminMW(http.HandlerFunc(productHandler.HandleDeleteProductById))))
+	mux.Handle("DELETE /api/v1/products/variants/{id}", authMW(adminMW(http.HandlerFunc(productHandler.HandleDeleteProductVariantById))))
 
 	// ---------- INVENTORY DOMAIN ----------
 	inventoryPersistence := persistence.NewInventoryPersistence((resourceConfig.GCloudDB))
 	inventoryService := service.NewInventoryService(inventoryPersistence)
 	inventoryHandler := handler.NewInventoryHandler(inventoryService)
 
-	mux.HandleFunc("POST /api/v1/inventory", inventoryHandler.HandleCreateInventory)
-	mux.HandleFunc("GET /api/v1/inventory", inventoryHandler.HandleGetAllInventory)
-	mux.HandleFunc("GET /api/v1/inventory/{id}", inventoryHandler.HandleGetInventoryById)
-	mux.HandleFunc("PATCH /api/v1/inventory/{id}", inventoryHandler.HandleUpdateInventoryById)
-	mux.HandleFunc("DELETE /api/v1/inventory/{id}", inventoryHandler.HandleDeleteInventoryById)
+	mux.Handle("POST /api/v1/inventory", authMW(adminMW(http.HandlerFunc(inventoryHandler.HandleCreateInventory))))
+	mux.Handle("GET /api/v1/inventory", authMW(adminMW(http.HandlerFunc(inventoryHandler.HandleGetAllInventory))))
+	mux.Handle("GET /api/v1/inventory/{id}", authMW(adminMW(http.HandlerFunc(inventoryHandler.HandleGetInventoryById))))
+	mux.Handle("PATCH /api/v1/inventory/{id}", authMW(adminMW(http.HandlerFunc(inventoryHandler.HandleUpdateInventoryById))))
+	mux.Handle("DELETE /api/v1/inventory/{id}", authMW(adminMW(http.HandlerFunc(inventoryHandler.HandleDeleteInventoryById))))
 
 }

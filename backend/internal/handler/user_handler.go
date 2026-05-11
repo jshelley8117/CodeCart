@@ -31,31 +31,31 @@ func NewUserHandler(userService service.UserService) UserHandler {
 }
 
 func (uh UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
-	zLog := utils.FromContext(r.Context(), zap.NewNop())
+	z := utils.FromContext(r.Context(), zap.NewNop())
 	var request model.CreateUserRequest
-	zLog.Debug("entered HandleCreateUser")
+	z.Debug("entered HandleCreateUser")
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zLog.Warn("request body read failed", zap.Error(err))
+		z.Warn("request body read failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_BODY_READ_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		zLog.Warn("json deserialization failed", zap.Error(err))
+		z.Warn("json deserialization failed", zap.Error(err))
 		http.Error(w, common.ERR_REQ_UNMARSH_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := validate.Struct(&request); err != nil {
-		zLog.Warn("struct validation failed", zap.Error(err))
+		z.Warn("struct validation failed", zap.Error(err))
 		http.Error(w, common.ERR_VALIDATION_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := uh.UserService.CreateUser(r.Context(), request); err != nil {
-		zLog.Error("service invocation failed", zap.Error(err))
+		z.Error("service invocation failed", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

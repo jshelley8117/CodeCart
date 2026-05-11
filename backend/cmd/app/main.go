@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	firebase "firebase.google.com/go/v4"
+	firebaseauth "firebase.google.com/go/v4/auth"
 	"github.com/joho/godotenv"
 	"github.com/jshelley8117/CodeCart/internal/middleware"
 	"github.com/jshelley8117/CodeCart/internal/resource"
@@ -17,14 +19,16 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/impersonate"
+	"google.golang.org/api/option"
 )
 
 const EXIT_STATUS = 1
 
 type ResourceConfig struct {
-	GCloudDB    *sql.DB
-	Logger      *zap.Logger
-	TokenSource oauth2.TokenSource
+	GCloudDB     *sql.DB
+	Logger       *zap.Logger
+	TokenSource  oauth2.TokenSource
+	FirebaseAuth *firebaseauth.Client
 }
 
 func main() {
@@ -44,8 +48,12 @@ func main() {
 		log.Fatal("Error: cannot instantiate logger")
 	}
 
-	var dbHandle *sql.DB
-	var reusableTS oauth2.TokenSource
+	var (
+		dbHandle   *sql.DB
+		reusableTS oauth2.TokenSource
+		fbApp      *firebase.App
+	)
+	ctx := context.Background()
 
 	switch *dbMode {
 	case "local":
@@ -53,6 +61,13 @@ func main() {
 		dbHandle, err = resource.NewPostgreSqlDb()
 		if err != nil {
 			logger.Error("Failed to establish connection to local PostgreSQL DB", zap.Error(err))
+			os.Exit(EXIT_STATUS)
+		}
+		fbApp, err = firebase.NewApp(ctx, &firebase.Config{
+			ProjectID: os.Getenv("GCP_PROJECT_ID"),
+		})
+		if err != nil {
+			logger.Error("Failed to initialize firebase application")
 			os.Exit(EXIT_STATUS)
 		}
 	case "gcp":
@@ -63,7 +78,6 @@ func main() {
 			os.Exit(EXIT_STATUS)
 		}
 
-		ctx := context.Background()
 		ts, err := impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
 			TargetPrincipal: targetSA,
 			Scopes:          []string{"https://www.googleapis.com/auth/cloud-platform"},
@@ -81,15 +95,25 @@ func main() {
 
 		logger.Debug("impersonation OK; token expires at %s (in ~%s)", zap.String("expiry", tok.Expiry.Format(time.RFC3339)), zap.String("duration", time.Until(tok.Expiry).Round(time.Second).String()))
 
-		reusableTS := oauth2.ReuseTokenSource(tok, ts)
+		reusableTS = oauth2.ReuseTokenSource(tok, ts)
 
 		dbHandle, err = resource.NewGCloudDB(reusableTS)
 		if err != nil {
 			logger.Error("could not connect to db: %v", zap.Error(err))
 			os.Exit(EXIT_STATUS)
 		}
+
+		fbApp, err = firebase.NewApp(ctx, &firebase.Config{
+			ProjectID: os.Getenv("GCP_PROJECT_ID"),
+		}, option.WithTokenSource(reusableTS))
 	default:
 		logger.Error("invalid db mode provided", zap.String("mode", *dbMode))
+		os.Exit(EXIT_STATUS)
+	}
+
+	fbAuthClient, err := fbApp.Auth(ctx)
+	if err != nil {
+		logger.Error("Failed to get firebase auth client", zap.Error(err))
 		os.Exit(EXIT_STATUS)
 	}
 
@@ -97,9 +121,10 @@ func main() {
 
 	mux := http.NewServeMux()
 	SetupRoutes(mux, ResourceConfig{
-		GCloudDB:    dbHandle,
-		Logger:      logger,
-		TokenSource: reusableTS,
+		GCloudDB:     dbHandle,
+		Logger:       logger,
+		TokenSource:  reusableTS,
+		FirebaseAuth: fbAuthClient,
 	})
 
 	handler := middleware.Recoverer(logger)(middleware.RequestLogger(logger)(mux))
