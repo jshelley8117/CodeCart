@@ -26,7 +26,7 @@ func (op OrderPersistence) PersistCreateOrder(ctx context.Context, orderDomain m
 	z.Debug("Entered PersistCreateOrder")
 
 	query := `
-		INSERT INTO orders (customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, orderType)
+		INSERT INTO orders (customer_id, payment_status, fulfillment_status, total_price, delivery_address, created_at, updated_at, address_id, order_type)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 

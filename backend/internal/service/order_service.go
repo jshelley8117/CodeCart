@@ -30,8 +30,8 @@ func (os OrderService) CreateOrder(ctx context.Context, request model.CreateOrde
 	if request.AddressId == 0 {
 		orderDomainModel = model.Order{
 			CustomerId:        request.CustomerId,
-			PaymentStatus:     "PENDING",
-			FulfillmentStatus: "FulfillmentStatusNotYetStarted",
+			PaymentStatus:     model.PaymentStatusPending,
+			FulfillmentStatus: model.FulfillmentStatusPending,
 			TotalPrice:        request.TotalPrice,
 			DeliveryAddress:   request.DeliveryAddress,
 			CreatedAt:         time.Now(),
@@ -42,8 +42,8 @@ func (os OrderService) CreateOrder(ctx context.Context, request model.CreateOrde
 	} else {
 		orderDomainModel = model.Order{
 			CustomerId:        request.CustomerId,
-			PaymentStatus:     "PENDING",
-			FulfillmentStatus: "FulfillmentStatusNotYetStarted",
+			PaymentStatus:     model.PaymentStatusPending,
+			FulfillmentStatus: model.FulfillmentStatusPending,
 			TotalPrice:        request.TotalPrice,
 			DeliveryAddress:   request.DeliveryAddress,
 			CreatedAt:         time.Now(),
