@@ -92,6 +92,16 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	mux.Handle("PATCH /api/v1/inventory/{id}", authMW(adminMW(http.HandlerFunc(inventoryHandler.HandleUpdateInventoryById))))
 	mux.Handle("DELETE /api/v1/inventory/{id}", authMW(adminMW(http.HandlerFunc(inventoryHandler.HandleDeleteInventoryById))))
 
+	// ---------- PAYMENTS DOMAIN ----------
+	paymentPersistence := persistence.NewPaymentPersistence(resourceConfig.GCloudDB)
+	paymentService := service.NewPaymentService(paymentPersistence)
+	paymentHandler := handler.NewPaymentHandler(paymentService)
+
+	mux.Handle("POST /api/v1/payments", authMW(http.HandlerFunc(paymentHandler.HandleCreatePayment)))
+	mux.Handle("GET /api/v1/payments/{id}", authMW(http.HandlerFunc(paymentHandler.HandleGetPaymentById)))
+	mux.Handle("PATCH /api/v1/payments/{id}", authMW(http.HandlerFunc(paymentHandler.HandleUpdatePaymentById)))
+	mux.Handle("DELETE /api/v1/payments/{id}", authMW(http.HandlerFunc(paymentHandler.HandleDeletePaymentById)))
+
 	// ---------- OrderItem DOMAIN ----------
 	orderItemPersistence := persistence.NewOrderItemPersistance(resourceConfig.GCloudDB)
 	orderItemService := service.NewOrderItemService(orderItemPersistence)
@@ -101,5 +111,16 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	mux.HandleFunc("GET /api/v1/orders/{orderId}/items", orderItemHandler.HandleGetAllOrderItems)
 	mux.HandleFunc("PATCH /api/v1/orders/{orderId}/item/{id}", orderItemHandler.HandleUpdateOrderItemById)
 	mux.HandleFunc("DELETE /api/v1/orders/{orderId}/item/{id}", orderItemHandler.HandleDeleteOrderItemById)
+
+	// ---------- LOCATIONS DOMAIN ----------
+	locationPersistence := persistence.NewLocationPersistence(resourceConfig.GCloudDB)
+	locationService := service.NewLocationService(locationPersistence)
+	locationHandler := handler.NewLocationHandler(locationService)
+
+	mux.Handle("POST /api/v1/locations", authMW(adminMW(http.HandlerFunc(locationHandler.HandleCreateLocation))))
+	mux.HandleFunc("GET /api/v1/locations", locationHandler.HandleGetAllLocations)
+	mux.HandleFunc("GET /api/v1/locations/{id}", locationHandler.HandleGetLocationById)
+	mux.Handle("PATCH /api/v1/locations/{id}", authMW(adminMW(http.HandlerFunc(locationHandler.HandleUpdateLocationById))))
+	mux.Handle("DELETE /api/v1/locations/{id}", authMW(adminMW(http.HandlerFunc(locationHandler.HandleDeleteLocationById))))
 
 }
