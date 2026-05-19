@@ -15,3 +15,5 @@ type ContextKey string
 
 const ContextKeyFirebaseUID ContextKey = "firebase_uid"
 const ContextKeyRole ContextKey = "role"
+
+const APIBasePath = "/api/v1"
