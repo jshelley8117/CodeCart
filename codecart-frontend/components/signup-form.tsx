@@ -66,12 +66,14 @@ export function SignupForm({
       // Send to Go backend via Next.js API route
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           email: formData.email,
           name: formData.name,
           auth_id: userCredential.user.uid,
-          idToken,
         }),
       })
 
