@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, name, auth_id } = body
+    const { email, name } = body
     const idToken = request.headers.get('Authorization')?.split(' ')[1]
 
     if (!idToken) {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ email, name, auth_id }),
+      body: JSON.stringify({ email, name }),
     })
 
     if (!response.ok) {

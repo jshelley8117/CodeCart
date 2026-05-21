@@ -22,7 +22,7 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	userHandler := handler.NewUserHandler(userService)
 
 	mux.HandleFunc("POST "+common.APIBasePath+"/users", userHandler.HandleCreateUser)
-	mux.HandleFunc("POST "+common.APIBasePath+"/auth/register", userHandler.HandleRegisterUser)
+	mux.Handle("POST "+common.APIBasePath+"/auth/register", authMW(http.HandlerFunc(userHandler.HandleRegisterUser)))
 
 	// ---------- CUSTOMERS DOMAIN ----------
 	customerPersistence := persistence.NewCustomerPersistence(resourceConfig.GCloudDB)

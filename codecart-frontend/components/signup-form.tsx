@@ -73,7 +73,6 @@ export function SignupForm({
         body: JSON.stringify({
           email: formData.email,
           name: formData.name,
-          auth_id: userCredential.user.uid,
         }),
       })
 

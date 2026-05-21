@@ -23,10 +23,9 @@ type CreateUserRequest struct {
 }
 
 type RegisterUserRequest struct {
-	Email  string  `json:"email" validate:"required,email"`
-	Name   string  `json:"name" validate:"required"`
-	AuthId string  `json:"auth_id" validate:"required"`
-	Role   *string `json:"role"`
+	Email string  `json:"email" validate:"required,email"`
+	Name  string  `json:"name" validate:"required"`
+	Role  *string `json:"role"`
 }
 
 type UserResponse struct {
