@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/jshelley8117/CodeCart/internal/model"
@@ -71,7 +72,49 @@ func (ds DiscountService) GetDiscountByID(ctx context.Context, id int) (model.Di
 	return discount, nil
 }
 
-func (ds DiscountService) UpdateDiscountById(ctx context.Context, id int, request model.UpdateDiscountRequest)
+func (ds DiscountService) UpdateDiscountById(ctx context.Context, id int, request model.UpdateDiscountRequest) error {
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entered UpdateDiscountById")
+
+	updates := make(map[string]any)
+
+	if request.Code != nil {
+		updates["code"] = *request.Code
+	}
+	if request.Value != nil {
+		updates["value"] = *request.Value
+	}
+	if request.Description != nil {
+		updates["description"] = *request.Description
+	}
+	if request.Type != nil {
+		updates["type"] = *request.Type
+	}
+	if request.IsActive != nil {
+		updates["is_active"] = *request.IsActive
+	}
+	if request.StartsAt != nil {
+		updates["starts_at"] = *request.StartsAt
+	}
+	if request.ExpiresAt != nil {
+		updates["expires_at"] = *request.ExpiresAt
+	}
+	if request.UsageLimit != nil {
+		updates["usage_limit"] = *request.UsageLimit
+	}
+
+	if len(updates) == 0 {
+		z.Error("no updates found", zap.Int("id", id))
+		return fmt.Errorf("no updates found")
+	}
+
+	if err := ds.DiscountPersistence.PersistUpdateDiscountById(ctx, id, updates); err != nil {
+		z.Error("persistence invocation failed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
 
 func (ds DiscountService) DeleteDiscountbyID(ctx context.Context, id int) error {
 	z := utils.FromContext(ctx, zap.NewNop())

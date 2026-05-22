@@ -94,6 +94,49 @@ func (dh DiscountHandler) HandleGetDiscountById(w http.ResponseWriter, r *http.R
 
 }
 
+func (dh DiscountHandler) HandleUpdateDiscountById(w http.ResponseWriter, r *http.Request) {
+	z := utils.FromContext(r.Context(), zap.NewNop())
+	z.Debug("Entered HandleUpdateDiscountById")
+
+	idPathVal := r.PathValue("id")
+	if idPathVal == "" {
+		z.Error("ID field in endpoint path parameter is missing")
+		http.Error(w, "ID is empty", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idPathVal)
+	if err != nil {
+		z.Error("failed to convert id value from string to integer")
+		http.Error(w, "server failed to process ID value", http.StatusInternalServerError)
+		return
+	}
+
+	var request model.UpdateDiscountRequest
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		z.Error(common.ERR_REQ_BODY_READ_FAIL, zap.Int("id", id), zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
+		return
+	}
+
+	if err := json.Unmarshal(body, &request); err != nil {
+		z.Error(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
+		return
+	}
+
+	if err := dh.DiscountService.UpdateDiscountById(r.Context(), id, request); err != nil {
+		z.Error("service invocation failed", zap.Int("id", id), zap.Error(err))
+		http.Error(w, common.ERR_CLIENT_DB_PERSISTENCE_FAIL, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+}
+
 func (dh DiscountHandler) HandleDeleteDiscountById(w http.ResponseWriter, r *http.Request) {
 	z := utils.FromContext(r.Context(), zap.NewNop())
 	z.Debug("Entered HandleDeleteDiscountById")
