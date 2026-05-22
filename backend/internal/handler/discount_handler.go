@@ -30,19 +30,19 @@ func (dh DiscountHandler) HandleCreateDiscount(w http.ResponseWriter, r *http.Re
 	var request model.CreateDiscount
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		z.Warn(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_BODY_READ_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		z.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
 
 	if err := validate.Struct(request); err != nil {
-		z.Warn(common.ERR_VALIDATION_FAIL, zap.Error(err))
+		z.Error(common.ERR_VALIDATION_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
