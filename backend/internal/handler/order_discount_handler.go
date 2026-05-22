@@ -51,7 +51,7 @@ func (odh OrderDiscountHandler) HandleCreateOrderDiscount(w http.ResponseWriter,
 	}
 
 	if err := json.Unmarshal(body, &request); err != nil {
-		z.Warn(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
+		z.Error(common.ERR_REQ_UNMARSH_FAIL, zap.Error(err))
 		http.Error(w, common.ERR_CLIENT_REQUEST_FAIL, http.StatusBadRequest)
 		return
 	}
