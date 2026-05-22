@@ -36,7 +36,7 @@ type CreateDiscount struct {
 	UsageLimit  int          `json:"usage_limit"`
 }
 
-type UpdateDiscount struct {
+type UpdateDiscountRequest struct {
 	Code        *string       `json:"code"`
 	Value       *float64      `json:"value"`
 	Description *string       `json:"description"`

@@ -42,3 +42,45 @@ func (ds DiscountService) CreateDiscount(ctx context.Context, request model.Crea
 
 	return nil
 }
+
+func (ds DiscountService) GetDiscountByID(ctx context.Context, id int) (model.Discount, error) {
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("Entererd GetDiscountById")
+
+	row := ds.DiscountPersistence.FetchDiscountById(ctx, id)
+
+	var discount model.Discount
+	if err := row.Scan(
+		&discount.Id,
+		&discount.Code,
+		&discount.Value,
+		&discount.Description,
+		&discount.Type,
+		&discount.IsActive,
+		&discount.StartsAt,
+		&discount.ExpiresAt,
+		&discount.UsageLimit,
+		&discount.TimesUsed,
+		&discount.CreatedAt,
+		&discount.UpdatedAt,
+	); err != nil {
+		z.Error("scan operation failed", zap.Error(err))
+		return model.Discount{}, err
+	}
+
+	return discount, nil
+}
+
+func (ds DiscountService) UpdateDiscountById(ctx context.Context, id int, request model.UpdateDiscountRequest)
+
+func (ds DiscountService) DeleteDiscountbyID(ctx context.Context, id int) error {
+	z := utils.FromContext(ctx, zap.NewNop())
+	z.Debug("entered DeleteDiscount")
+
+	if err := ds.DiscountPersistence.PersistDeleteDiscountById(ctx, id); err != nil {
+		z.Error("persistence invocation failed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}

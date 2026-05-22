@@ -130,5 +130,7 @@ func SetupRoutes(mux *http.ServeMux, resourceConfig ResourceConfig) {
 	discountHandler := handler.NewDiscountHandler(discountService)
 
 	mux.Handle("POST "+common.APIBasePath+"/discount", http.HandlerFunc(discountHandler.HandleCreateDiscount))
+	mux.HandleFunc("GET "+common.APIBasePath+"/discount/{id}", discountHandler.HandleGetDiscountById)
+	mux.Handle("DELETE "+common.APIBasePath+"/discount/{id}", http.HandlerFunc(discountHandler.HandleDeleteDiscountById))
 
 }
